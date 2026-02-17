@@ -75,6 +75,8 @@ struct RunTests: AsyncParsableCommand {
 
         try await executeXcodeBuild()
         
+        try await shutdownSimulator()
+
         print("\n✅ Tests passed.\n")
     }
 
@@ -107,6 +109,17 @@ struct RunTests: AsyncParsableCommand {
         let deviceID = try await CI.run(.path("/bin/zsh"), ["-cu", "xcrun simctl create '\(name)' \(type) \(simulatorRuntime)"],
                                         output: .string(limit: 4096)).standardOutput
         print("Created simulator '\(name)' (\(deviceID?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "unknown")).")
+    }
+    
+    // MARK: - Simulator Shutdown
+    
+    private func shutdownSimulator() async throws {
+        print("Shutting down simulator '\(device)'…")
+        
+        let command = "xcrun simctl shutdown '\(device)' 2>/dev/null || true"
+        _ = try await CI.run(.path("/bin/zsh"), ["-cu", command])
+        
+        print("Simulator shut down.")
     }
     
     // MARK: - Test Running
