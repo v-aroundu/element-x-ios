@@ -23,15 +23,15 @@ struct CI: ParsableCommand {
     
     /// Runs SwiftFormat in lint mode against the current directory.
     static func lint() async throws {
-        CI.log("\n🔍 Running SwiftFormat lint…\n")
+        print("\n🔍 Running SwiftFormat lint…\n")
         
         do {
             _ = try await run(.name("swiftformat"), ["--lint", "."])
         } catch {
-            CI.log("\n❌ SwiftFormat failed.\n")
+            print("\n❌ SwiftFormat failed.\n")
             throw error
         }
-        CI.log("\n✅ SwiftFormat passed.\n")
+        print("\n✅ SwiftFormat passed.\n")
     }
     
     // MARK: - Coverage & Test Result Collection
@@ -44,15 +44,15 @@ struct CI: ParsableCommand {
         let outputPath = "\(testOutputDirectory)/\(outputName)"
         
         guard FileManager.default.fileExists(atPath: resultBundlePath) else {
-            CI.log("\n❌ Result bundle not found at \(resultBundlePath), skipping coverage collection.\n")
+            print("\n❌ Result bundle not found at \(resultBundlePath), skipping coverage collection.\n")
             return
         }
         
         do {
             _ = try await run(.path("/bin/zsh"), ["-cu", "xcresultparser -q -o cobertura -t \(target) -p \(projectPath) \(resultBundlePath) > \(outputPath)"])
-            CI.log("\n📊 Coverage report: \(outputPath)\n")
+            print("\n📊 Coverage report: \(outputPath)\n")
         } catch {
-            CI.log("\n❌ Failed to collect coverage for \(resultBundle): \(error.localizedDescription)\n")
+            print("\n❌ Failed to collect coverage for \(resultBundle): \(error.localizedDescription)\n")
         }
     }
     
@@ -64,15 +64,15 @@ struct CI: ParsableCommand {
         let outputPath = "\(testOutputDirectory)/\(outputName)"
         
         guard FileManager.default.fileExists(atPath: resultBundlePath) else {
-            CI.log(" Result bundle not found at \(resultBundlePath), skipping test result collection.")
+            print(" Result bundle not found at \(resultBundlePath), skipping test result collection.")
             return
         }
         
         do {
             _ = try await run(.path("/bin/zsh"), ["-cu", "xcresultparser -q -o junit -p \(projectPath) \(resultBundlePath) > \(outputPath)"])
-            CI.log("📋 Test results: \(outputPath)")
+            print("📋 Test results: \(outputPath)")
         } catch {
-            CI.log("\n❌ Failed to collect test results for \(resultBundle): \(error.localizedDescription)\n")
+            print("\n❌ Failed to collect test results for \(resultBundle): \(error.localizedDescription)\n")
         }
     }
     
@@ -82,11 +82,11 @@ struct CI: ParsableCommand {
     static func zipResults(bundles: [String], outputName: String) async {
         let bundleArgs = bundles.joined(separator: " ")
         do {
-            CI.log("\n📦 Zipping test results…")
+            print("\n📦 Zipping test results…")
             _ = try await run(.path("/bin/zsh"), ["-cu", "cd \(testOutputDirectory) && zip -rq \(outputName) \(bundleArgs)"])
-            CI.log("📦 Zipped: \(testOutputDirectory)/\(outputName)\n")
+            print("📦 Zipped: \(testOutputDirectory)/\(outputName)\n")
         } catch {
-            CI.log("\n❌ Failed to zip results: \(error.localizedDescription)\n")
+            print("\n❌ Failed to zip results: \(error.localizedDescription)\n")
         }
     }
     

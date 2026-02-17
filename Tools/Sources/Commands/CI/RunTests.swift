@@ -75,17 +75,17 @@ struct RunTests: AsyncParsableCommand {
 
         try await executeXcodeBuild()
         
-        CI.log("\n✅ Tests passed.\n")
+        print("\n✅ Tests passed.\n")
     }
 
     // MARK: - Simulator Management
     
     private func createSimulatorIfNecessary(name: String, type: String) async throws {
-        CI.log("Checking for simulator '\(name)'…")
+        print("Checking for simulator '\(name)'…")
         
         guard let simulators = try await CI.run(.path("/bin/zsh"), ["-cu", "xcrun simctl list devices \"iOS \(osVersion)\" available"],
                                                 output: .string(limit: 4096)).standardOutput else {
-            CI.log("No simulators found for iOS \(osVersion). Creating '\(name)'…")
+            print("No simulators found for iOS \(osVersion). Creating '\(name)'…")
             try await createSimulator(name: name, type: type)
             return
         }
@@ -96,9 +96,9 @@ struct RunTests: AsyncParsableCommand {
         }
 
         if hasExisting {
-            CI.log("Simulator '\(name)' already exists.")
+            print("Simulator '\(name)' already exists.")
         } else {
-            CI.log("Simulator '\(name)' not found. Creating…")
+            print("Simulator '\(name)' not found. Creating…")
             try await createSimulator(name: name, type: type)
         }
     }
@@ -106,7 +106,7 @@ struct RunTests: AsyncParsableCommand {
     private func createSimulator(name: String, type: String) async throws {
         let deviceID = try await CI.run(.path("/bin/zsh"), ["-cu", "xcrun simctl create '\(name)' \(type) \(simulatorRuntime)"],
                                         output: .string(limit: 4096)).standardOutput
-        CI.log("Created simulator '\(name)' (\(deviceID?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "unknown")).")
+        print("Created simulator '\(name)' (\(deviceID?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "unknown")).")
     }
     
     // MARK: - Test Running
