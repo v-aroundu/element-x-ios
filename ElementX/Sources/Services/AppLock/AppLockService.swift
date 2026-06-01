@@ -7,6 +7,7 @@
 //
 
 import Combine
+import Foundation
 
 /// The service responsible for locking and unlocking the app.
 class AppLockService: AppLockServiceProtocol {

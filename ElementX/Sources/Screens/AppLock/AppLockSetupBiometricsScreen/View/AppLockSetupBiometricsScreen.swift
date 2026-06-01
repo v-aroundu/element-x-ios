@@ -73,8 +73,8 @@ struct AppLockSetupBiometricsScreen: View {
 // MARK: - Previews
 
 struct AppLockSetupBiometricsScreen_Previews: PreviewProvider, TestablePreview {
-    static let faceIDViewModel = AppLockSetupBiometricsScreenViewModel(appLockService: AppLockServiceMock.mock(biometryType: .faceID))
-    static let touchIDViewModel = AppLockSetupBiometricsScreenViewModel(appLockService: AppLockServiceMock.mock(biometryType: .touchID))
+    static let faceIDViewModel = AppLockSetupBiometricsScreenViewModel(appLockService: AppLockServiceMock.mock())
+    static let touchIDViewModel = AppLockSetupBiometricsScreenViewModel(appLockService: AppLockServiceMock.mock())
     
     static var previews: some View {
         NavigationStack {

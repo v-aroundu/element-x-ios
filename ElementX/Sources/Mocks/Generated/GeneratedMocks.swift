@@ -10328,6 +10328,138 @@ class KeychainControllerMock: KeychainControllerProtocol, @unchecked Sendable {
         removePINCodeBiometricStateCallsCount += 1
         removePINCodeBiometricStateClosure?()
     }
+
+    //MARK: - containsDummyPINCode
+
+    var containsDummyPINCodeUnderlyingCallsCount = 0
+    var containsDummyPINCodeCallsCount: Int {
+        get {
+            if Thread.isMainThread { return containsDummyPINCodeUnderlyingCallsCount }
+            var returnValue: Int? = nil
+            DispatchQueue.main.sync { returnValue = containsDummyPINCodeUnderlyingCallsCount }
+            return returnValue!
+        }
+        set {
+            if Thread.isMainThread { containsDummyPINCodeUnderlyingCallsCount = newValue }
+            else { DispatchQueue.main.sync { containsDummyPINCodeUnderlyingCallsCount = newValue } }
+        }
+    }
+    var containsDummyPINCodeCalled: Bool { return containsDummyPINCodeCallsCount > 0 }
+    var containsDummyPINCodeUnderlyingReturnValue: Bool!
+    var containsDummyPINCodeReturnValue: Bool! {
+        get {
+            if Thread.isMainThread { return containsDummyPINCodeUnderlyingReturnValue }
+            var returnValue: Bool? = nil
+            DispatchQueue.main.sync { returnValue = containsDummyPINCodeUnderlyingReturnValue }
+            return returnValue!
+        }
+        set {
+            if Thread.isMainThread { containsDummyPINCodeUnderlyingReturnValue = newValue }
+            else { DispatchQueue.main.sync { containsDummyPINCodeUnderlyingReturnValue = newValue } }
+        }
+    }
+    var containsDummyPINCodeClosure: (() -> Bool)?
+
+    func containsDummyPINCode() -> Bool {
+        containsDummyPINCodeCallsCount += 1
+        if let containsDummyPINCodeClosure = containsDummyPINCodeClosure {
+            return containsDummyPINCodeClosure()
+        } else {
+            return containsDummyPINCodeReturnValue
+        }
+    }
+
+    //MARK: - setDummyPINCode
+
+    var setDummyPINCodeThrowableError: Error?
+    var setDummyPINCodeUnderlyingCallsCount = 0
+    var setDummyPINCodeCallsCount: Int {
+        get {
+            if Thread.isMainThread { return setDummyPINCodeUnderlyingCallsCount }
+            var returnValue: Int? = nil
+            DispatchQueue.main.sync { returnValue = setDummyPINCodeUnderlyingCallsCount }
+            return returnValue!
+        }
+        set {
+            if Thread.isMainThread { setDummyPINCodeUnderlyingCallsCount = newValue }
+            else { DispatchQueue.main.sync { setDummyPINCodeUnderlyingCallsCount = newValue } }
+        }
+    }
+    var setDummyPINCodeCalled: Bool { return setDummyPINCodeCallsCount > 0 }
+    var setDummyPINCodeReceivedPinCode: String?
+    var setDummyPINCodeReceivedInvocations: [String] = []
+    var setDummyPINCodeClosure: ((String) throws -> Void)?
+
+    func setDummyPINCode(_ pinCode: String) throws {
+        if let error = setDummyPINCodeThrowableError { throw error }
+        setDummyPINCodeCallsCount += 1
+        setDummyPINCodeReceivedPinCode = pinCode
+        DispatchQueue.main.async { self.setDummyPINCodeReceivedInvocations.append(pinCode) }
+        try setDummyPINCodeClosure?(pinCode)
+    }
+
+    //MARK: - dummyPINCode
+
+    var dummyPINCodeUnderlyingCallsCount = 0
+    var dummyPINCodeCallsCount: Int {
+        get {
+            if Thread.isMainThread { return dummyPINCodeUnderlyingCallsCount }
+            var returnValue: Int? = nil
+            DispatchQueue.main.sync { returnValue = dummyPINCodeUnderlyingCallsCount }
+            return returnValue!
+        }
+        set {
+            if Thread.isMainThread { dummyPINCodeUnderlyingCallsCount = newValue }
+            else { DispatchQueue.main.sync { dummyPINCodeUnderlyingCallsCount = newValue } }
+        }
+    }
+    var dummyPINCodeCalled: Bool { return dummyPINCodeCallsCount > 0 }
+    var dummyPINCodeUnderlyingReturnValue: String?
+    var dummyPINCodeReturnValue: String? {
+        get {
+            if Thread.isMainThread { return dummyPINCodeUnderlyingReturnValue }
+            var returnValue: String?? = nil
+            DispatchQueue.main.sync { returnValue = dummyPINCodeUnderlyingReturnValue }
+            return returnValue!
+        }
+        set {
+            if Thread.isMainThread { dummyPINCodeUnderlyingReturnValue = newValue }
+            else { DispatchQueue.main.sync { dummyPINCodeUnderlyingReturnValue = newValue } }
+        }
+    }
+    var dummyPINCodeClosure: (() -> String?)?
+
+    func dummyPINCode() -> String? {
+        dummyPINCodeCallsCount += 1
+        if let dummyPINCodeClosure = dummyPINCodeClosure {
+            return dummyPINCodeClosure()
+        } else {
+            return dummyPINCodeReturnValue
+        }
+    }
+
+    //MARK: - removeDummyPINCode
+
+    var removeDummyPINCodeUnderlyingCallsCount = 0
+    var removeDummyPINCodeCallsCount: Int {
+        get {
+            if Thread.isMainThread { return removeDummyPINCodeUnderlyingCallsCount }
+            var returnValue: Int? = nil
+            DispatchQueue.main.sync { returnValue = removeDummyPINCodeUnderlyingCallsCount }
+            return returnValue!
+        }
+        set {
+            if Thread.isMainThread { removeDummyPINCodeUnderlyingCallsCount = newValue }
+            else { DispatchQueue.main.sync { removeDummyPINCodeUnderlyingCallsCount = newValue } }
+        }
+    }
+    var removeDummyPINCodeCalled: Bool { return removeDummyPINCodeCallsCount > 0 }
+    var removeDummyPINCodeClosure: (() -> Void)?
+
+    func removeDummyPINCode() {
+        removeDummyPINCodeCallsCount += 1
+        removeDummyPINCodeClosure?()
+    }
 }
 class KnockRequestProxyMock: KnockRequestProxyProtocol, @unchecked Sendable {
     var eventID: String {
