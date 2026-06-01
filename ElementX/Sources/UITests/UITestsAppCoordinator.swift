@@ -173,19 +173,13 @@ class MockScreen: Identifiable {
             let keychainController = KeychainController(service: .tests, accessGroup: InfoPlistReader.main.keychainAccessGroupIdentifier)
             keychainController.resetSecrets()
             
-            let context = LAContextMock()
-            context.biometryTypeValue = UIDevice.current.isPhone ? .faceID : .touchID // (iPhone 14 & iPad 9th gen)
-            context.evaluatePolicyReturnValue = true
-            context.evaluatedPolicyDomainStateValue = Data("😎".utf8)
-            
             let appLockService = AppLockService(keychainController: keychainController,
-                                                appSettings: ServiceLocator.shared.settings,
-                                                context: context)
+                                                appSettings: ServiceLocator.shared.settings)
             
             if id == .appLockFlowAlternateWindow {
                 let pinCode = "2023"
                 guard case .success = appLockService.setupPINCode(pinCode),
-                      appLockService.unlock(with: pinCode) else {
+                      appLockService.unlock(with: pinCode) == .unlockedReal else {
                     fatalError("Failed to preset the PIN code.")
                 }
             }
@@ -210,7 +204,7 @@ class MockScreen: Identifiable {
                     switch action {
                     case .lockApp:
                         windowManager.switchToAlternate()
-                    case .unlockApp:
+                    case .unlockApp, .unlockAppWithDummyPIN:
                         windowManager.switchToMain()
                     case .forceLogout:
                         break
@@ -229,14 +223,8 @@ class MockScreen: Identifiable {
             let keychainController = KeychainController(service: .tests, accessGroup: InfoPlistReader.main.keychainAccessGroupIdentifier)
             keychainController.resetSecrets()
             
-            let context = LAContextMock()
-            context.biometryTypeValue = UIDevice.current.isPhone ? .faceID : .touchID // (iPhone 14 & iPad 9th gen)
-            context.evaluatePolicyReturnValue = true
-            context.evaluatedPolicyDomainStateValue = Data("😎".utf8)
-            
             let appLockService = AppLockService(keychainController: keychainController,
-                                                appSettings: ServiceLocator.shared.settings,
-                                                context: context)
+                                                appSettings: ServiceLocator.shared.settings)
             if id == .appLockSetupFlowUnlock, case .failure = appLockService.setupPINCode("2023") {
                 fatalError("Failed to pre-set the PIN code")
             }
