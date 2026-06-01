@@ -15,6 +15,7 @@ struct CallNotificationRoomTimelineItem: RoomTimelineItemProtocol, Equatable {
     let canBeRepliedTo: Bool
     
     let sender: TimelineItemSender
+    let isOutgoing: Bool
     
     var properties = RoomTimelineItemProperties()
 }

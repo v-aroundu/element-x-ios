@@ -80,12 +80,12 @@ struct RoomMembersListScreenMemberCell: View {
     // Computed properties to hide the user's profile when banned.
     
     var title: String {
-        guard !listEntry.member.isBanned else { return listEntry.member.id }
-        return listEntry.member.name ?? listEntry.member.id
+        guard !listEntry.member.isBanned else { return listEntry.member.id.matrixIDLocalpart }
+        return listEntry.member.name ?? listEntry.member.id.matrixIDLocalpart
     }
     
     var subtitle: String? {
-        listEntry.member.isBanned ? nil : listEntry.member.id
+        listEntry.member.isBanned ? nil : listEntry.member.id.matrixIDLocalpart
     }
     
     var avatarName: String? {

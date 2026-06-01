@@ -28,7 +28,7 @@ struct RoomInviterDetails: Equatable {
         
         // Pre-compute the attributed string.
         let placeholder = "{displayname}"
-        var string = AttributedString(L10n.screenInvitesInvitedYou(placeholder, id))
+        var string = AttributedString(L10n.screenInvitesInvitedYou(placeholder, id.matrixIDLocalpart))
         var displayNameString = AttributedString(nameOrLocalPart)
         displayNameString.bold()
         displayNameString.foregroundColor = .compound.textPrimary

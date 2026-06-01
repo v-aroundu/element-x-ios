@@ -26,6 +26,8 @@ struct SpaceScreen: View {
                 
                 if context.viewState.shouldShowEmptyState {
                     emptyState
+                } else if context.viewState.shouldShowMemberEmptyState {
+                    memberEmptyState
                 } else {
                     rooms
                 }
@@ -88,6 +90,19 @@ struct SpaceScreen: View {
             .padding(.horizontal, 16)
         }
         .padding(.top, 40)
+    }
+    
+    var memberEmptyState: some View {
+        VStack(spacing: 12) {
+            CompoundIcon(\.room, size: .custom(40), relativeTo: .compound.bodyLG)
+                .foregroundStyle(.compound.iconSecondary)
+            Text(L10n.screenSpaceNoRoomsTitle)
+                .font(.compound.bodyLGSemibold)
+                .foregroundStyle(.compound.textSecondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 60)
     }
     
     @ToolbarContentBuilder

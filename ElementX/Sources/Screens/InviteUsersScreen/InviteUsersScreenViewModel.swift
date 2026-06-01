@@ -84,11 +84,6 @@ class InviteUsersScreenViewModel: InviteUsersScreenViewModelType, InviteUsersScr
         }
         
         Task {
-            defer {
-                hideLoadingIndicator()
-                actionsSubject.send(.dismiss)
-            }
-            
             let result: Result<Void, RoomProxyError> = await withTaskGroup(of: Result<Void, RoomProxyError>.self) { group in
                 for user in users {
                     group.addTask {
@@ -101,13 +96,17 @@ class InviteUsersScreenViewModel: InviteUsersScreenViewModelType, InviteUsersScr
                 } ?? .success(())
             }
             
-            guard case .failure = result else {
-                return
-            }
+            hideLoadingIndicator()
             
-            state.bindings.alertInfo = .init(id: .unknown,
-                                             title: L10n.commonUnableToInviteTitle,
-                                             message: L10n.commonUnableToInviteMessage)
+            switch result {
+            case .success:
+                actionsSubject.send(.dismiss)
+            case .failure:
+                MXLog.error("Failed inviting users: \(users)")
+                state.bindings.alertInfo = .init(id: .unknown,
+                                                 title: L10n.commonUnableToInviteTitle,
+                                                 message: L10n.commonUnableToInviteMessage)
+            }
         }
     }
     

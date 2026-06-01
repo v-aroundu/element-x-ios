@@ -11,9 +11,7 @@ import CoreLocation
 extension MapTilerConfiguration: MapTilerURLBuilderProtocol {
     /// For interactive MGLMap components
     func interactiveMapURL(for style: MapTilerStyle) -> URL? {
-        var url = styleURL(for: style)
-        url?.appendPathComponent("style.json", conformingTo: .json)
-        return url
+        styleURL(for: style)
     }
     
     /// Used in the timeline where a full MGLMapView loading is unwanted
@@ -41,6 +39,7 @@ extension MapTilerConfiguration: MapTilerURLBuilderProtocol {
         
         var url: URL = baseURL
         url.appendPathComponent(styleID(for: style), conformingTo: .item)
+        url.appendPathComponent("style.json", conformingTo: .json)
         url.append(queryItems: [URLQueryItem(name: "key", value: apiKey)])
         return url
     }

@@ -42,6 +42,7 @@ final class AppSettings {
         case hasSeenNewSoundBanner
         case appLockNumberOfPINAttempts
         case appLockNumberOfBiometricAttempts
+        case hasShownAppLockPrompt
         case timelineStyle
         
         case analyticsConsentState
@@ -96,7 +97,7 @@ final class AppSettings {
         return .debug
         #else
         switch InfoPlistReader.main.baseBundleIdentifier {
-        case "io.element.elementx.nightly":
+        case "app.aroundu.messenger.nightly":
             return .nightly
         default:
             return .release
@@ -200,7 +201,7 @@ final class AppSettings {
     private(set) var hideBrandChrome = false
     
     /// The task identifier used for background app refresh. Also used in main target's the Info.plist
-    let backgroundAppRefreshTaskIdentifier = "io.element.elementx.background.refresh"
+    let backgroundAppRefreshTaskIdentifier = "app.aroundu.messenger.background.refresh"
 
     /// A URL where users can go read more about the app.
     private(set) var websiteURL: URL = "https://element.io"
@@ -245,12 +246,15 @@ final class AppSettings {
     /// The number of attempts the user has made to unlock the app with a PIN code (resets when unlocked).
     @UserPreference(key: UserDefaultsKeys.appLockNumberOfPINAttempts, defaultValue: 0, storageType: .userDefaults(store))
     var appLockNumberOfPINAttempts: Int
+    /// Whether the user has been shown the post-login app lock security prompt.
+    @UserPreference(key: UserDefaultsKeys.hasShownAppLockPrompt, defaultValue: false, storageType: .userDefaults(store))
+    var hasShownAppLockPrompt: Bool
     
     // MARK: - Authentication
     
     /// Any pre-defined static client registrations for OIDC issuers.
     let oidcStaticRegistrations: [URL: String] = ["https://id.thirdroom.io/realms/thirdroom": "elementx"]
-    /// The redirect URL used for OIDC. This no longer uses universal links so we don't need the bundle ID to avoid conflicts between Element X, Nightly and PR builds.
+    /// The redirect URL used for OIDC. This no longer uses universal links so we don't need the bundle ID to avoid conflicts between aroundU Messenger, Nightly and PR builds.
     private(set) var oidcRedirectURL: URL = "https://element.io/oidc/login"
     
     private(set) lazy var oidcConfiguration = OIDCConfiguration(clientName: InfoPlistReader.main.bundleDisplayName,
@@ -269,14 +273,10 @@ final class AppSettings {
     // MARK: - Notifications
     
     var pusherAppID: String {
-        #if DEBUG
-        InfoPlistReader.main.baseBundleIdentifier + ".ios.dev"
-        #else
-        InfoPlistReader.main.baseBundleIdentifier + ".ios.prod"
-        #endif
+        InfoPlistReader.main.baseBundleIdentifier + ".ios"
     }
     
-    private(set) var pushGatewayBaseURL: URL = "https://matrix.org"
+    private(set) var pushGatewayBaseURL: URL = "https://push.aroundu.app"
     var pushGatewayNotifyEndpoint: URL {
         pushGatewayBaseURL.appending(path: "_matrix/push/v1/notify")
     }
@@ -387,8 +387,8 @@ final class AppSettings {
     /// maptiler base url
     private(set) var mapTilerConfiguration = MapTilerConfiguration(baseURL: "https://api.maptiler.com/maps",
                                                                    apiKey: Secrets.mapLibreAPIKey,
-                                                                   lightStyleID: "9bc819c8-e627-474a-a348-ec144fe3d810",
-                                                                   darkStyleID: "dea61faf-292b-4774-9660-58fcef89a7f3")
+                                                                   lightStyleID: "streets-v2",
+                                                                   darkStyleID: "streets-v2-dark")
     
     // MARK: - Presence
     

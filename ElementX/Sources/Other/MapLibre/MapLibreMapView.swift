@@ -93,6 +93,9 @@ struct MapLibreMapView: UIViewRepresentable {
         mapView.tintColor = .black
         mapView.allowsRotating = false
         mapView.allowsTilting = false
+        // Request highest possible GPS accuracy for precise location sharing
+        mapView.locationManager.setDesiredAccuracy?(kCLLocationAccuracyBest)
+        mapView.locationManager.setDistanceFilter?(kCLDistanceFilterNone)
         return mapView
     }
     

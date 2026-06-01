@@ -19,6 +19,8 @@ struct AdvancedSettingsScreen: View {
                         kind: .picker(selection: $context.appAppearance,
                                       items: AppAppearance.allCases.map { (title: $0.name, tag: $0) }))
                 
+                languageRow
+                
                 ListRow(label: .plain(title: L10n.actionViewSource,
                                       description: L10n.screenAdvancedSettingsViewSourceDescription),
                         kind: .toggle($context.viewSourceEnabled))
@@ -41,6 +43,17 @@ struct AdvancedSettingsScreen: View {
         .compoundList()
         .navigationTitle(L10n.commonAdvancedSettings)
         .navigationBarTitleDisplayMode(.inline)
+    }
+    
+    @ViewBuilder
+    private var languageRow: some View {
+        ListRow(label: .plain(title: "Language / اللغة",
+                              description: "Change in iPhone Settings → aroundU → Language"),
+                kind: .button {
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                })
     }
     
     @ViewBuilder

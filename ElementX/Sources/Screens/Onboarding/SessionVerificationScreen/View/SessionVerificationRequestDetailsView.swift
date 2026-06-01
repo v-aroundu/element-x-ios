@@ -36,12 +36,12 @@ struct SessionVerificationRequestDetailsView: View {
                 .accessibilityHidden(true)
             
             VStack(alignment: .leading, spacing: 0) {
-                Text(details.senderProfile.displayName ?? details.senderProfile.userID)
+                Text(details.senderProfile.displayName ?? details.senderProfile.userID.matrixIDLocalpart)
                     .font(.compound.bodySM)
                     .foregroundColor(.compound.textSecondary)
                 
                 if details.senderProfile.displayName != nil {
-                    Text(details.senderProfile.userID)
+                    Text(details.senderProfile.userID.matrixIDLocalpart)
                         .font(.compound.bodyMD)
                         .foregroundColor(.compound.textPrimary)
                 }
@@ -66,7 +66,7 @@ struct SessionVerificationRequestDetailsView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                     
                     let displayName = isUserVerification ? details.senderProfile.displayName : details.deviceDisplayName
-                    Text(displayName ?? details.senderProfile.userID)
+                    Text(displayName ?? details.senderProfile.userID.matrixIDLocalpart)
                         .font(.compound.bodyMDSemibold)
                         .foregroundColor(.compound.textPrimary)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -115,7 +115,7 @@ struct SessionVerificationRequestDetailsView_Previews: PreviewProvider, Testable
                                                                                            avatarURL: .mockMXCUserAvatar),
                                                            flowID: "123",
                                                            deviceID: "CODEMISTAKE",
-                                                           deviceDisplayName: "Bob's Element X iOS",
+                                                           deviceDisplayName: "Bob's aroundU Messenger iOS",
                                                            firstSeenDate: .init(timeIntervalSince1970: 0))
     
     static var previews: some View {

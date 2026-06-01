@@ -18,14 +18,14 @@ struct CallNotificationRoomTimelineView: View {
     var body: some View {
         HStack(spacing: 12) {
             LoadableAvatarImage(url: timelineItem.sender.avatarURL,
-                                name: timelineItem.sender.displayName ?? timelineItem.sender.id,
+                                name: timelineItem.sender.displayName ?? timelineItem.sender.id.matrixIDLocalpart,
                                 contentID: timelineItem.sender.id,
                                 avatarSize: .user(on: .timeline),
                                 mediaProvider: context?.mediaProvider)
                 .accessibilityHidden(true)
             
             VStack(alignment: .leading, spacing: 0) {
-                Text(timelineItem.sender.disambiguatedDisplayName ?? timelineItem.sender.id)
+                Text(timelineItem.isOutgoing ? L10n.commonYou : (timelineItem.sender.disambiguatedDisplayName ?? timelineItem.sender.id.matrixIDLocalpart))
                     .font(.compound.bodyLGSemibold)
                     .foregroundColor(.compound.textPrimary)
                     .lineLimit(1)
@@ -63,6 +63,7 @@ struct CallNotificationRoomTimelineView_Previews: PreviewProvider, TestablePrevi
                                                              timestamp: .mock,
                                                              isEditable: false,
                                                              canBeRepliedTo: false,
-                                                             sender: .init(id: "Bob")))
+                                                             sender: .init(id: "Bob"),
+                                                             isOutgoing: false))
     }
 }

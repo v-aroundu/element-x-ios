@@ -57,6 +57,11 @@ struct HomeScreen: View {
                 .buttonStyle(.borderless)
         }
         
+        ToolbarItem(placement: .navigationBarLeading) {
+            locationTrackingButton
+                .buttonStyle(.borderless)
+        }
+        
         ToolbarItem(placement: .primaryAction) {
             if #available(iOS 26, *) {
                 newRoomButton
@@ -66,19 +71,19 @@ struct HomeScreen: View {
             }
         }
         
-        if context.viewState.spaceFiltersEnabled, context.viewState.shouldShowSpaceFilters {
-            if #available(iOS 26, *) {
-                ToolbarSpacer(.fixed, placement: .primaryAction)
-            }
+        // if context.viewState.spaceFiltersEnabled, context.viewState.shouldShowSpaceFilters {
+        //     if #available(iOS 26, *) {
+        //         ToolbarSpacer(.fixed, placement: .primaryAction)
+        //     }
                
-            ToolbarItem(placement: .primaryAction) {
-                SpaceFiltersButton(selected: context.viewState.selectedSpaceFilter != nil) {
-                    context.send(viewAction: .spaceFilters)
-                }
-                .matchedTransitionSource(id: NavigationTransitionSourceID.spaceFilters,
-                                         in: navigationTransitionNamespace)
-            }
-        }
+        //     ToolbarItem(placement: .primaryAction) {
+        //         SpaceFiltersButton(selected: context.viewState.selectedSpaceFilter != nil) {
+        //             context.send(viewAction: .spaceFilters)
+        //         }
+        //         .matchedTransitionSource(id: NavigationTransitionSourceID.spaceFilters,
+        //                                  in: navigationTransitionNamespace)
+        //     }
+        // }
     }
     
     private var settingsButton: some View {
@@ -96,6 +101,30 @@ struct HomeScreen: View {
                 .compositingGroup()
         }
         .accessibilityLabel(L10n.commonSettings)
+    }
+    
+    private var locationTrackingButton: some View {
+        Menu {
+            if context.viewState.isLocationTrackingActive {
+                Button(role: .destructive) {
+                    context.send(viewAction: .toggleLocationTracking)
+                } label: {
+                    Label("Turn off location", systemImage: "location.slash.fill")
+                }
+            } else {
+                Button {
+                    context.send(viewAction: .toggleLocationTracking)
+                } label: {
+                    Label("Turn on location", systemImage: "location.fill")
+                }
+            }
+        } label: {
+            Image(systemName: context.viewState.isLocationTrackingActive ? "location.fill" : "location.slash")
+                .foregroundStyle(context.viewState.isLocationTrackingActive ? Color.red : Color.compound.textSecondary)
+        }
+        .accessibilityLabel(context.viewState.isLocationTrackingActive
+                            ? "Location sharing is on. Tap to turn off."
+                            : "Location sharing is off. Tap to turn on.")
     }
     
     @ViewBuilder
@@ -126,41 +155,41 @@ struct HomeScreen: View {
         Text(item.subtitle)
     }
     
-    private struct SpaceFiltersButton: View {
-        var selected = false
-        var action: () -> Void
+    // private struct SpaceFiltersButton: View {
+    //     var selected = false
+    //     var action: () -> Void
         
-        var body: some View {
-            if #available(iOS 26, *) {
-                if selected {
-                    content
-                        .backportButtonStyleGlassProminent()
-                        .tint(.compound.bgActionPrimaryRest)
-                } else {
-                    content
-                }
-            } else {
-                if selected {
-                    content
-                        .buttonStyle(.compound(.primary, size: .toolbarIcon))
-                } else {
-                    content
-                        .buttonStyle(.compound(.tertiary, size: .toolbarIcon))
-                }
-            }
-        }
+    //     var body: some View {
+    //         if #available(iOS 26, *) {
+    //             if selected {
+    //                 content
+    //                     .backportButtonStyleGlassProminent()
+    //                     .tint(.compound.bgActionPrimaryRest)
+    //             } else {
+    //                 content
+    //             }
+    //         } else {
+    //             if selected {
+    //                 content
+    //                     .buttonStyle(.compound(.primary, size: .toolbarIcon))
+    //             } else {
+    //                 content
+    //                     .buttonStyle(.compound(.tertiary, size: .toolbarIcon))
+    //             }
+    //         }
+    //     }
         
-        private var content: some View {
-            Button {
-                action()
-            } label: {
-                CompoundIcon(\.filter)
-            }
-            .accessibilityLabel(L10n.screenRoomlistYourSpaces)
-            .accessibilityAddTraits(selected ? .isSelected : [])
-            .accessibilityIdentifier(A11yIdentifiers.homeScreen.spaceFilters)
-        }
-    }
+    //     private var content: some View {
+    //         Button {
+    //             action()
+    //         } label: {
+    //             CompoundIcon(\.filter)
+    //         }
+    //         .accessibilityLabel(L10n.screenRoomlistYourSpaces)
+    //         .accessibilityAddTraits(selected ? .isSelected : [])
+    //         .accessibilityIdentifier(A11yIdentifiers.homeScreen.spaceFilters)
+    //     }
+    // }
 }
 
 // MARK: - Previews

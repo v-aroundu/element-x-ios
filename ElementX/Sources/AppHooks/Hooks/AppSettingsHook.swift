@@ -14,6 +14,28 @@ protocol AppSettingsHookProtocol {
 
 struct DefaultAppSettingsHook: AppSettingsHookProtocol {
     func configure(_ appSettings: AppSettings) -> AppSettings {
-        appSettings
+        // Lock the app to the aroundU Messenger homeserver so that tapping "Sign in"
+        // goes directly to the username/password screen without any server selection step.
+        appSettings.override(accountProviders: ["messenger.aroundu.app"],
+                             allowOtherAccountProviders: false,
+                             hideBrandChrome: appSettings.hideBrandChrome,
+                             pushGatewayBaseURL: appSettings.pushGatewayBaseURL,
+                             oidcRedirectURL: appSettings.oidcRedirectURL,
+                             websiteURL: appSettings.websiteURL,
+                             logoURL: appSettings.logoURL,
+                             copyrightURL: appSettings.copyrightURL,
+                             acceptableUseURL: appSettings.acceptableUseURL,
+                             privacyURL: appSettings.privacyURL,
+                             encryptionURL: appSettings.encryptionURL,
+                             deviceVerificationURL: appSettings.deviceVerificationURL,
+                             chatBackupDetailsURL: appSettings.chatBackupDetailsURL,
+                             identityPinningViolationDetailsURL: appSettings.identityPinningViolationDetailsURL,
+                             historySharingDetailsURL: appSettings.historySharingDetailsURL,
+                             elementWebHosts: appSettings.elementWebHosts,
+                             accountProvisioningHost: appSettings.accountProvisioningHost,
+                             bugReportApplicationID: appSettings.bugReportApplicationID,
+                             analyticsTermsURL: appSettings.analyticsTermsURL,
+                             mapTilerConfiguration: appSettings.mapTilerConfiguration)
+        return appSettings
     }
 }

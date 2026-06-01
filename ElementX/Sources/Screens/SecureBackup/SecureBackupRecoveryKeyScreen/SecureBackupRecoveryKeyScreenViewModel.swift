@@ -61,17 +61,29 @@ class SecureBackupRecoveryKeyScreenViewModel: SecureBackupRecoveryKeyScreenViewM
             Task {
                 showLoadingIndicator()
                 
-                switch await secureBackupController.confirmRecoveryKey(state.bindings.confirmationRecoveryKey) {
+                // Normalize the key: trim surrounding whitespace and collapse any
+                // extra internal whitespace so a key copied with varied spacing
+                // (e.g. leading/trailing spaces or double spaces) is still accepted.
+                let rawKey = state.bindings.confirmationRecoveryKey
+                let normalizedKey = rawKey
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                    .components(separatedBy: .whitespaces)
+                    .filter { !$0.isEmpty }
+                    .joined(separator: " ")
+                
+                switch await secureBackupController.confirmRecoveryKey(normalizedKey) {
                 case .success:
+                    // Hide the loading indicator before dismissing the screen so the
+                    // persistent modal overlay does not block the sheet dismissal.
+                    hideLoadingIndicator()
                     actionsSubject.send(.done(mode: state.mode))
                 case .failure(let error):
                     MXLog.error("Failed confirming recovery key with error: \(error)")
+                    hideLoadingIndicator()
                     state.bindings.alertInfo = .init(id: .init(),
                                                      title: L10n.screenRecoveryKeyConfirmErrorTitle,
                                                      message: L10n.screenRecoveryKeyConfirmErrorContent)
                 }
-                
-                hideLoadingIndicator()
             }
         case .cancel:
             actionsSubject.send(.cancel)

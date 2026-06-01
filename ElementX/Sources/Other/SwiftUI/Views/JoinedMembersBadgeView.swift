@@ -37,7 +37,7 @@ struct JoinedMembersBadgeView: View {
     }
     
     func title() -> Text {
-        Text("\(joinedCount)")
+        Text(L10n.commonMemberCount(joinedCount))
     }
     
     var heroesFacePile: some View {

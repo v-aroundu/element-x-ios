@@ -11,6 +11,9 @@ fetch_unshallow_repository
 # Perform this step before releasing to github in case it fails.
 bundle exec fastlane upload_dsyms_to_sentry dsym_path:"$CI_ARCHIVE_PATH/dSYMs"
 
+# Upload dSYMs to Firebase Crashlytics as well
+bundle exec fastlane upload_dsyms_to_firebase dsym_path:"$CI_ARCHIVE_PATH/dSYMs"
+
 generate_what_to_test_notes
 
 if [ "$CI_WORKFLOW" = "Release" ]; then

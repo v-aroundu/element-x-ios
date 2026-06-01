@@ -64,7 +64,7 @@ class RoomSummaryProvider: RoomSummaryProviderProtocol {
          notificationSettings: NotificationSettingsProxyProtocol,
          appSettings: AppSettings) {
         self.roomListService = roomListService
-        serialDispatchQueue = DispatchQueue(label: "io.element.elementx.room_summary_provider", qos: .default)
+        serialDispatchQueue = DispatchQueue(label: "app.aroundu.messenger.room_summary_provider", qos: .default)
         self.eventStringBuilder = eventStringBuilder
         self.name = name
         self.shouldUpdateVisibleRange = shouldUpdateVisibleRange
@@ -292,7 +292,7 @@ class RoomSummaryProvider: RoomSummaryProviderProtocol {
                 
                 if let senderID {
                     let sender = TimelineItemSender(senderID: senderID, senderProfile: profile)
-                    let senderDisplayName = sender.displayName ?? sender.id
+                    let senderDisplayName = sender.displayName ?? sender.id.matrixIDLocalpart
                     let invitedYouString = eventStringBuilder.stateEventStringBuilder.buildInvitedYouString(senderDisplayName)
                     attributedLastMessage = AttributedString(invitedYouString)
                 }

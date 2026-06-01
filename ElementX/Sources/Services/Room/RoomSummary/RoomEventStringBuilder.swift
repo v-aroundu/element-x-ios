@@ -23,9 +23,9 @@ struct RoomEventStringBuilder {
     
     func buildAttributedString(for content: TimelineItemContent, sender: TimelineItemSender, isOutgoing: Bool) -> AttributedString? {
         let displayName = if shouldDisambiguateDisplayNames {
-            sender.disambiguatedDisplayName ?? sender.id
+            sender.disambiguatedDisplayName ?? sender.id.matrixIDLocalpart
         } else {
-            sender.displayName ?? sender.id
+            sender.displayName ?? sender.id.matrixIDLocalpart
         }
         
         switch content {

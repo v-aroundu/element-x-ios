@@ -65,7 +65,7 @@ final class NotificationManager: NSObject, NotificationManagerProtocol {
     }
     
     func requestAuthorization() {
-        guard appSettings.enableNotifications, !userSession.isNil else { return }
+        guard appSettings.enableNotifications else { return }
         Task {
             do {
                 let permissionGranted = try await notificationCenter.requestAuthorization(options: [.alert, .sound, .badge])
@@ -91,15 +91,29 @@ final class NotificationManager: NSObject, NotificationManagerProtocol {
     func setUserSession(_ userSession: UserSessionProtocol?) {
         self.userSession = userSession
         
-        // If notification permissions were given previously then attempt re-registering
-        // for remote notifications on startup. Otherwise let the onboarding flow handle it
         Task { [weak self] in
             guard let self else { return }
             
-            if await notificationCenter.authorizationStatus() == .authorized, appSettings.enableNotifications {
-                await MainActor.run { [weak self] in
-                    self?.delegate?.registerForRemoteNotifications()
+            let authorizationStatus = await notificationCenter.authorizationStatus()
+            
+            switch authorizationStatus {
+            case .authorized, .provisional, .ephemeral:
+                // Permissions already granted — re-register the APNS token on every login/session restore.
+                if appSettings.enableNotifications {
+                    await MainActor.run { [weak self] in
+                        self?.delegate?.registerForRemoteNotifications()
+                    }
                 }
+            case .notDetermined:
+                // Permission has never been asked on this device (e.g. the onboarding screen was
+                // skipped by a migration, or the app was deleted and reinstalled). Ask now.
+                if appSettings.enableNotifications {
+                    MXLog.info("Notification permission not yet determined — requesting authorisation.")
+                    requestAuthorization()
+                }
+            default:
+                // .denied — the user explicitly denied; nothing we can do without sending them to Settings.
+                break
             }
             
             let settings = await notificationCenter.notificationSettings()

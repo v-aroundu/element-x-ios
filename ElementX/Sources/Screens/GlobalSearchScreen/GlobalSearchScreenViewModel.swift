@@ -40,6 +40,8 @@ class GlobalSearchScreenViewModel: GlobalSearchScreenViewModelType, GlobalSearch
                 if searchQuery.isEmpty {
                     self?.roomSummaryProvider.setFilter(.all(filters: []))
                 } else {
+                    // Use the SDK's name search so results span all pages,
+                    // then client-side filtering adds last-message matches on top.
                     self?.roomSummaryProvider.setFilter(.search(query: searchQuery))
                 }
             }
@@ -73,7 +75,27 @@ class GlobalSearchScreenViewModel: GlobalSearchScreenViewModelType, GlobalSearch
     // MARK: - Private
     
     private func updateRooms(with summaries: [RoomSummary]) {
-        state.rooms = summaries.compactMap { summary in
+        let query = context.viewState.bindings.searchQuery.lowercased()
+        
+        let filteredSummaries = if query.isEmpty {
+            summaries
+        } else {
+            summaries.filter { summary in
+                if summary.name.lowercased().contains(query) {
+                    return true
+                }
+                if let lastMessage = summary.lastMessage,
+                   String(lastMessage.characters).lowercased().contains(query) {
+                    return true
+                }
+                if let alias = summary.canonicalAlias?.lowercased(), alias.contains(query) {
+                    return true
+                }
+                return false
+            }
+        }
+        
+        state.rooms = filteredSummaries.compactMap { summary in
             GlobalSearchRoom(id: summary.id,
                              title: summary.name,
                              description: summary.roomListDescription,

@@ -16,10 +16,14 @@ final class UserDiscoveryService: UserDiscoveryServiceProtocol {
     }
 
     func searchProfiles(with searchQuery: String) async -> Result<[UserProfileProxy], UserDiscoveryErrorType> {
-        async let queriedProfile = profileIfPossible(with: searchQuery)
+        // If the user typed just a username (no @ prefix and no colon), auto-build a
+        // full Matrix ID using the logged-in user's homeserver, e.g. "alice" → "@alice:messenger.aroundu.app".
+        let resolvedQuery = resolveQuery(searchQuery)
+        
+        async let queriedProfile = profileIfPossible(with: resolvedQuery)
 
         do {
-            async let searchedUsers = clientProxy.searchUsers(searchTerm: searchQuery, limit: 10).get()
+            async let searchedUsers = clientProxy.searchUsers(searchTerm: resolvedQuery, limit: 10).get()
             let users = try await merge(queriedProfile: queriedProfile, searchResults: searchedUsers)
             return .success(filterAccountOwner(users))
         } catch {
@@ -30,6 +34,20 @@ final class UserDiscoveryService: UserDiscoveryServiceProtocol {
                 return .failure(.failedSearchingUsers)
             }
         }
+    }
+    
+    /// Turns a bare username like "alice" into "@alice:homeserver.domain".
+    /// Leaves already-complete Matrix IDs and other strings unchanged.
+    private func resolveQuery(_ query: String) -> String {
+        // Already a full Matrix ID or contains special characters — leave as-is.
+        guard !query.hasPrefix("@"), !query.contains(":"), !query.isEmpty else {
+            return query
+        }
+        // Extract the homeserver domain from the logged-in user's ID.
+        let userID = clientProxy.userID
+        guard let colonIndex = userID.firstIndex(of: ":") else { return query }
+        let homeserver = String(userID[userID.index(after: colonIndex)...])
+        return "@\(query):\(homeserver)"
     }
 
     private func merge(queriedProfile: UserProfileProxy?, searchResults: SearchUsersResultsProxy) -> [UserProfileProxy] {
@@ -51,10 +69,9 @@ final class UserDiscoveryService: UserDiscoveryServiceProtocol {
             return nil
         }
         
-        let getProfileResult = try? await clientProxy.profile(for: searchQuery).get()
-        
-        // fallback to a "local profile" if the profile api fails
-        return getProfileResult ?? .init(userID: searchQuery)
+        // Only return a profile when it actually exists on the server.
+        // Returning a stub profile for an unknown ID causes the "can't be found" warning to appear.
+        return try? await clientProxy.profile(for: searchQuery).get()
     }
 
     private func filterAccountOwner(_ profiles: [UserProfileProxy]) -> [UserProfileProxy] {

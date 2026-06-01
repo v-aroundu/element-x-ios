@@ -36,7 +36,7 @@ enum PillUtilities {
     private static let userDecoration = "@"
     static func userPillDisplayText(username: String?, userID: String) -> String {
         guard let username else {
-            return userID
+            return userID.matrixIDLocalpart
         }
         return "\(userDecoration)\(username)"
     }

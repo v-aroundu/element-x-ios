@@ -78,9 +78,7 @@ class LoginScreenViewModel: LoginScreenViewModelType, LoginScreenViewModelProtoc
         Task {
             switch await authenticationService.configure(for: homeserverDomain, flow: .login) {
             case .success:
-                if authenticationService.homeserver.value.loginMode.supportsOIDCFlow {
-                    actionsSubject.send(.configuredForOIDC)
-                }
+                // Do not redirect to OIDC — always stay on password login screen.
                 stopLoading()
             case .failure(let error):
                 stopLoading()

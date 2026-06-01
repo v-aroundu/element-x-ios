@@ -33,15 +33,19 @@ class OIDCAccountSettingsPresenter: NSObject {
     
     /// Presents a web authentication session for the supplied data.
     func start() {
-        let session = ASWebAuthenticationSession(url: accountURL, callback: .oidcRedirectURL(oidcRedirectURL)) { [continuation] _, error in
+        let session = ASWebAuthenticationSession(url: accountURL, callback: .oidcRedirectURL(oidcRedirectURL)) { [continuation] callbackURL, error in
             guard let continuation else { return }
             
             if error?.isOIDCUserCancellation == true {
                 continuation.yield(.failure(.userCancellation))
-            } else {
-                let errorDescription = error.map(String.init(describing:)) ?? "Unknown error"
+            } else if let error {
+                let errorDescription = String(describing: error)
                 MXLog.error("A web authentication session error occurred: \(errorDescription)")
                 continuation.yield(.failure(.unknown))
+            } else {
+                // callbackURL is non-nil — the OIDC redirect completed successfully.
+                _ = callbackURL
+                continuation.yield(.success(()))
             }
             
             continuation.finish()

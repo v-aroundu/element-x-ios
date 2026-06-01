@@ -78,11 +78,23 @@ struct HomeScreenRoomCell: View {
     
     private var header: some View {
         HStack(alignment: .top, spacing: 16) {
-            Text(room.name)
-                .font(.compound.bodyLGSemibold)
-                .foregroundColor(.compound.textPrimary)
-                .lineLimit(1)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(room.name)
+                    .font(.compound.bodyLGSemibold)
+                    .foregroundColor(.compound.textPrimary)
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                
+                if !room.isDirect {
+                    Text(L10n.commonRoom)
+                        .font(.compound.bodyXS)
+                        .foregroundColor(.compound.textOnSolidPrimary)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.compound.bgActionPrimaryRest, in: Capsule())
+                        .fixedSize()
+                }
+            }
             
             if let timestamp = room.timestamp {
                 Text(timestamp)

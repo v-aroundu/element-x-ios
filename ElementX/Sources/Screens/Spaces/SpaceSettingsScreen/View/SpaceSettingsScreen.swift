@@ -58,12 +58,6 @@ struct SpaceSettingsScreen: View {
                     .lineLimit(1)
                     .font(.compound.headingMD)
                     .foregroundStyle(.compound.textPrimary)
-                if let alias = context.viewState.details.canonicalAlias {
-                    Text(alias)
-                        .lineLimit(1)
-                        .font(.compound.bodySM)
-                        .foregroundStyle(.compound.textSecondary)
-                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             

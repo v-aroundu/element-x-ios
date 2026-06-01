@@ -48,6 +48,11 @@ struct SpaceScreenViewState: BindableState {
         rooms.isEmpty && paginationState == .endReached && canEditChildren
     }
     
+    /// True when the space has no rooms and the current user cannot edit — show a read-only "no rooms" message
+    var shouldShowMemberEmptyState: Bool {
+        rooms.isEmpty && paginationState == .endReached && !canEditChildren
+    }
+    
     var visibleRooms: [SpaceServiceRoom] {
         if editMode == .inactive {
             rooms

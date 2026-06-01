@@ -134,10 +134,10 @@ struct TimelineReplyView: View {
                     .accessibilityHidden(true)
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(sender.disambiguatedDisplayName ?? sender.id)
+                    Text(sender.disambiguatedDisplayName ?? sender.id.matrixIDLocalpart)
                         .font(.compound.bodySMSemibold)
                         .foregroundColor(.compound.textPrimary)
-                        .accessibilityLabel(L10n.commonInReplyTo(sender.disambiguatedDisplayName ?? sender.id))
+                        .accessibilityLabel(L10n.commonInReplyTo(sender.disambiguatedDisplayName ?? sender.id.matrixIDLocalpart))
                     
                     Text(context.viewState.buildMessagePreview(formattedBody: formattedBody, plainBody: plainBody))
                         .font(.compound.bodyMD)

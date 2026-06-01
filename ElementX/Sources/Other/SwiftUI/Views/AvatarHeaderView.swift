@@ -44,7 +44,7 @@ struct AvatarHeaderView<Footer: View>: View {
         if let roomAlias = room.canonicalAlias {
             subtitle = roomAlias
         } else if room.isDirect, case let .heroes(heroes) = room.avatar, heroes.count == 1 {
-            subtitle = heroes[0].userID
+            subtitle = heroes[0].userID.matrixIDLocalpart
         } else {
             subtitle = nil
         }
@@ -72,8 +72,8 @@ struct AvatarHeaderView<Footer: View>: View {
          @ViewBuilder footer: @escaping () -> Footer) {
         let dmRecipientProfile = UserProfileProxy(member: dmRecipient)
         avatarInfo = .room(.heroes([dmRecipientProfile, UserProfileProxy(member: accountOwner)]))
-        title = dmRecipientProfile.displayName ?? dmRecipientProfile.userID
-        subtitle = dmRecipientProfile.displayName == nil ? nil : dmRecipientProfile.userID
+        title = dmRecipientProfile.displayName ?? dmRecipientProfile.userID.matrixIDLocalpart
+        subtitle = dmRecipientProfile.displayName == nil ? nil : dmRecipientProfile.userID.matrixIDLocalpart
         
         avatarSize = .user(on: .dmDetails)
         self.mediaProvider = mediaProvider
@@ -106,8 +106,8 @@ struct AvatarHeaderView<Footer: View>: View {
          onAvatarTap: ((URL) -> Void)? = nil,
          @ViewBuilder footer: @escaping () -> Footer) {
         avatarInfo = .user(user)
-        title = user.displayName ?? user.userID
-        subtitle = user.displayName == nil ? nil : user.userID
+        title = user.displayName ?? user.userID.matrixIDLocalpart
+        subtitle = user.displayName == nil ? nil : user.userID.matrixIDLocalpart
         
         self.avatarSize = avatarSize
         self.mediaProvider = mediaProvider

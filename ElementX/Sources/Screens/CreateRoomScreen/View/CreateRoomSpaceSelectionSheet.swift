@@ -31,7 +31,7 @@ struct CreateRoomSpaceSelectionSheet: View {
                             })
                     ForEach(context.viewState.editableSpaces, id: \.id) { space in
                         ListRow(label: .avatar(title: space.name,
-                                               description: space.canonicalAlias,
+                                               description: L10n.commonMemberCount(space.joinedMembersCount),
                                                icon: RoomAvatarImage(avatar: space.avatar,
                                                                      avatarSize: .room(on: .createRoomSelectSpace),
                                                                      mediaProvider: context.mediaProvider)),

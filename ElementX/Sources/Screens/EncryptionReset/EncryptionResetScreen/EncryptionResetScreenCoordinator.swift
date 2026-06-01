@@ -10,7 +10,7 @@ import Combine
 import SwiftUI
 
 enum EncryptionResetScreenCoordinatorAction {
-    case requestOIDCAuthorisation(URL)
+    case openURL(URL)
     case requestPassword(passwordPublisher: PassthroughSubject<String, Never>)
     case resetFinished
     case cancel
@@ -44,8 +44,8 @@ final class EncryptionResetScreenCoordinator: CoordinatorProtocol {
             
             guard let self else { return }
             switch action {
-            case .requestOIDCAuthorisation(let url):
-                self.actionsSubject.send(.requestOIDCAuthorisation(url))
+            case .openURL(let url):
+                self.actionsSubject.send(.openURL(url))
             case .requestPassword(let passwordPublisher):
                 self.actionsSubject.send(.requestPassword(passwordPublisher: passwordPublisher))
             case .resetFinished:

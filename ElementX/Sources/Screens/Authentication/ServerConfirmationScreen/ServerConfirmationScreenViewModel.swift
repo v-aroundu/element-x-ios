@@ -133,25 +133,9 @@ class ServerConfirmationScreenViewModel: ServerConfirmationScreenViewModelType, 
     }
     
     private func fetchLoginURLIfNeededAndContinue() async {
-        guard authenticationService.homeserver.value.loginMode.supportsOIDCFlow else {
-            actionsSubject.send(.continueWithPassword)
-            return
-        }
-        
-        guard let window = state.window else {
-            displayError(.unknownError)
-            return
-        }
-        
-        startLoading() // Uses the same ID, so no need to worry if the indicator already exists
-        defer { stopLoading() }
-        
-        switch await authenticationService.urlForOIDCLogin(loginHint: nil) {
-        case .success(let oidcData):
-            actionsSubject.send(.continueWithOIDC(data: oidcData, window: window))
-        case .failure:
-            displayError(.unknownError)
-        }
+        // Always use password login to avoid OIDC web authentication session issues
+        // with Associated Domains not being configured for this app bundle.
+        actionsSubject.send(.continueWithPassword)
     }
     
     private let loadingIndicatorID = "\(ServerConfirmationScreenViewModel.self)-Loading"

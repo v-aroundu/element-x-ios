@@ -165,13 +165,43 @@ struct RoomScreen: View {
         }
         
         if !ProcessInfo.processInfo.isiOSAppOnMac {
+            // Location toggle — always visible in the top-right toolbar
             ToolbarItem(placement: .primaryAction) {
-                if context.viewState.shouldShowCallButton {
+                locationTrackingButton
+            }
+            
+            // Call button — shown alongside the location button when calling is enabled
+            if context.viewState.shouldShowCallButton {
+                ToolbarItem(placement: .primaryAction) {
                     callButton
                         .disabled(!context.viewState.canJoinCall)
                 }
             }
         }
+    }
+    
+    private var locationTrackingButton: some View {
+        Menu {
+            if context.viewState.isLocationTrackingActive {
+                Button(role: .destructive) {
+                    context.send(viewAction: .toggleLocationTracking)
+                } label: {
+                    Label("Turn off location", systemImage: "location.slash.fill")
+                }
+            } else {
+                Button {
+                    context.send(viewAction: .toggleLocationTracking)
+                } label: {
+                    Label("Turn on location", systemImage: "location.fill")
+                }
+            }
+        } label: {
+            Image(systemName: context.viewState.isLocationTrackingActive ? "location.fill" : "location.slash")
+                .foregroundStyle(context.viewState.isLocationTrackingActive ? Color.red : Color.compound.textSecondary)
+        }
+        .accessibilityLabel(context.viewState.isLocationTrackingActive
+                            ? "Location sharing is on. Tap to turn off."
+                            : "Location sharing is off. Tap to turn on.")
     }
     
     @ViewBuilder

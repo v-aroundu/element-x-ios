@@ -122,7 +122,7 @@ struct JoinRoomScreen: View {
                                 .multilineTextAlignment(.center)
                         }
                         
-                        Text(inviter.id)
+                        Text(inviter.id.matrixIDLocalpart)
                             .font(.compound.bodySM)
                             .foregroundStyle(.compound.textSecondary)
                             .multilineTextAlignment(.center)

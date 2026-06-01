@@ -40,6 +40,14 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
     
     // periphery:ignore - retaining purpose
     private var settingsFlowCoordinator: SettingsFlowCoordinator?
+    // periphery:ignore - retaining purpose
+    private var appLockPromptCoordinator: AppLockPromptScreenCoordinator?
+    // periphery:ignore - retaining purpose
+    private var appLockSetupFlowCoordinator: AppLockSetupFlowCoordinator?
+    
+    /// Tracks whether onboarding has already been started this session to prevent it
+    /// being re-triggered by `sessionSecurityStatePublisher` emitting after Face ID/Touch ID unlock.
+    private var hasStartedOnboarding = false
     
     enum State: StateType {
         /// The state machine hasn't started.
@@ -176,6 +184,11 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
             chatsTabFlowCoordinator.start()
             spacesTabFlowCoordinator.start()
             attemptStartingOnboarding()
+            
+            // If onboarding doesn't need to start, attempt to show the app lock prompt directly
+            if !onboardingFlowCoordinator.shouldStart {
+                attemptShowingAppLockPrompt()
+            }
         }
         
         stateMachine.addRoutes(event: .showSettingsScreen, transitions: [.tabBar => .settingsScreen]) { [weak self] _ in
@@ -239,7 +252,7 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
             }
             .store(in: &cancellables)
         
-        let reachabilityNotificationID = "io.element.elementx.reachability.notification"
+        let reachabilityNotificationID = "app.aroundu.messenger.reachability.notification"
         userSession.clientProxy.homeserverReachabilityPublisher.removeDuplicates()
             .combineLatest(flowParameters.appMediator.networkMonitor.reachabilityPublisher.removeDuplicates())
             .receive(on: DispatchQueue.main)
@@ -271,6 +284,7 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
                     navigationTabCoordinator.setFullScreenCoverCoordinator(onboardingStackCoordinator, animated: animated)
                 case .dismiss:
                     navigationTabCoordinator.setFullScreenCoverCoordinator(nil)
+                    attemptShowingAppLockPrompt()
                 case .logout:
                     logout()
                 }
@@ -303,9 +317,98 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
     private func attemptStartingOnboarding() {
         MXLog.info("Attempting to start onboarding")
         
+        // Guard against re-starting onboarding when sessionSecurityStatePublisher fires
+        // after a biometric unlock (Face ID / Touch ID). Without this guard the full-screen
+        // cover is re-presented and the app appears stuck / frozen on the home screen.
+        guard !hasStartedOnboarding else {
+            MXLog.info("Onboarding already started this session, skipping.")
+            return
+        }
+        
         if onboardingFlowCoordinator.shouldStart {
+            hasStartedOnboarding = true
             clearRoute(animated: false)
             onboardingFlowCoordinator.start()
+        }
+    }
+    
+    // MARK: - App Lock Prompt
+    
+    /// Shows the app lock security prompt if the user hasn't seen it yet and app lock isn't already enabled.
+    private func attemptShowingAppLockPrompt() {
+        let appSettings = flowParameters.appSettings
+        
+        guard !appSettings.hasShownAppLockPrompt,
+              !appLockService.isEnabled else {
+            MXLog.info("App lock prompt not needed (already shown: \(appSettings.hasShownAppLockPrompt), app lock enabled: \(appLockService.isEnabled))")
+            return
+        }
+        
+        MXLog.info("Showing app lock security prompt")
+        
+        // Delay slightly to ensure the UI has settled after onboarding dismissal
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(500))
+            presentAppLockPrompt()
+        }
+    }
+    
+    private func presentAppLockPrompt() {
+        let coordinator = AppLockPromptScreenCoordinator()
+        coordinator.start()
+        
+        coordinator.actions.sink { [weak self] action in
+            guard let self else { return }
+            
+            switch action {
+            case .enableAppLock:
+                MXLog.info("User chose to enable app lock from prompt")
+                flowParameters.appSettings.hasShownAppLockPrompt = true
+                navigationTabCoordinator.setSheetCoordinator(nil)
+                appLockPromptCoordinator = nil
+                
+                // Slight delay to let the sheet dismiss before showing the setup flow
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(300))
+                    self.presentAppLockSetupFromPrompt()
+                }
+                
+            case .skip:
+                MXLog.info("User skipped app lock prompt")
+                flowParameters.appSettings.hasShownAppLockPrompt = true
+                navigationTabCoordinator.setSheetCoordinator(nil)
+                appLockPromptCoordinator = nil
+            }
+        }
+        .store(in: &cancellables)
+        
+        appLockPromptCoordinator = coordinator
+        navigationTabCoordinator.setSheetCoordinator(coordinator, animated: true)
+    }
+    
+    /// Presents the App Lock setup flow (PIN creation + biometrics) triggered from the security prompt.
+    private func presentAppLockSetupFromPrompt() {
+        let navigationStackCoordinator = NavigationStackCoordinator()
+        let coordinator = AppLockSetupFlowCoordinator(presentingFlow: .settings,
+                                                      appLockService: appLockService,
+                                                      navigationStackCoordinator: navigationStackCoordinator)
+        coordinator.actions.sink { [weak self] action in
+            guard let self else { return }
+            switch action {
+            case .complete:
+                navigationTabCoordinator.setSheetCoordinator(nil)
+                appLockSetupFlowCoordinator = nil
+            case .forceLogout:
+                actionsSubject.send(.forceLogout)
+            }
+        }
+        .store(in: &cancellables)
+        
+        appLockSetupFlowCoordinator = coordinator
+        coordinator.start()
+        
+        navigationTabCoordinator.setSheetCoordinator(navigationStackCoordinator, animated: true) { [weak self] in
+            self?.appLockSetupFlowCoordinator = nil
         }
     }
     

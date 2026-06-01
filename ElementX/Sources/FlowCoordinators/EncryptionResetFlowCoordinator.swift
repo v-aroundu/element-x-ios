@@ -9,6 +9,7 @@
 import Combine
 import Foundation
 import SwiftState
+import UIKit
 
 enum EncryptionResetFlowCoordinatorAction: Equatable {
     /// The flow is complete.
@@ -119,8 +120,12 @@ class EncryptionResetFlowCoordinator: FlowCoordinatorProtocol {
             guard let self else { return }
             
             switch action {
-            case .requestOIDCAuthorisation(let url):
-                presentOIDCAuthorization(for: url)
+            case .openURL(let url):
+                // Open the OIDC cross-signing reset approval URL in Safari.
+                // The user approves in the browser, then comes back to the app
+                // and taps "Continue" — the ViewModel then calls reset(auth: nil).
+                MXLog.info("Opening OIDC cross-signing reset approval URL in Safari: \(url)")
+                UIApplication.shared.open(url)
             case .requestPassword(let passwordPublisher):
                 stateMachine.tryEvent(.confirmPassword, userInfo: passwordPublisher)
             case .cancel:
@@ -150,15 +155,5 @@ class EncryptionResetFlowCoordinator: FlowCoordinatorProtocol {
         navigationStackCoordinator.push(coordinator) { [stateMachine] in
             stateMachine.tryEvent(.finishedConfirmingPassword)
         }
-    }
-    
-    private var accountSettingsPresenter: OIDCAccountSettingsPresenter?
-    private func presentOIDCAuthorization(for url: URL) {
-        // Note to anyone in the future if you come back here to make this open in Safari instead of a WAS.
-        // As of iOS 16, there is an issue on the simulator with accessing the cookie but it works on a device. 🤷‍♂️
-        accountSettingsPresenter = OIDCAccountSettingsPresenter(accountURL: url,
-                                                                presentationAnchor: windowManager.mainWindow,
-                                                                appSettings: appSettings)
-        accountSettingsPresenter?.start()
     }
 }

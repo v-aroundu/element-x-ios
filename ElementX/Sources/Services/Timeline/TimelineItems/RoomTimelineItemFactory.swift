@@ -753,7 +753,8 @@ struct RoomTimelineItemFactory: RoomTimelineItemFactoryProtocol {
                                          timestamp: eventItemProxy.timestamp,
                                          isEditable: eventItemProxy.isEditable,
                                          canBeRepliedTo: eventItemProxy.canBeRepliedTo,
-                                         sender: eventItemProxy.sender)
+                                         sender: eventItemProxy.sender,
+                                         isOutgoing: eventItemProxy.isOwn)
     }
     
     // MARK: - State Events

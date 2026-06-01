@@ -18,7 +18,7 @@ struct UserDetailsEditScreen: View {
             Section {
                 avatar
             } footer: {
-                Text(context.viewState.userID)
+                Text(context.viewState.userID.matrixIDLocalpart)
                     .frame(maxWidth: .infinity)
                     .font(.compound.bodyLG)
                     .foregroundColor(.compound.textPrimary)

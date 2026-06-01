@@ -7,7 +7,10 @@
 //
 
 import Combine
+import FirebaseMessaging
 import SwiftUI
+import Firebase
+import FirebaseCrashlytics
 
 enum AppDelegateCallback {
     case registeredNotifications(deviceToken: Data)
@@ -19,18 +22,30 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     var orientationLock = UIInterfaceOrientationMask.all
     
     func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
-        // Add a SceneDelegate to the SwiftUI scene so that we can connect up the WindowManager.
+        // Add waita SceneDelegate to the SwiftUI scene so that we can connect up the WindowManager.
         let configuration = UISceneConfiguration(name: nil, sessionRole: connectingSceneSession.role)
         configuration.delegateClass = SceneDelegate.self
         return configuration
     }
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+        AppTheme.apply()
+        FirebaseApp.configure()
+        
+        // Enable Crashlytics data collection unconditionally.
+        // Without this, crash reports are NOT uploaded to Firebase.
+        Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(true)
+        
+        // Log a non-fatal breadcrumb so we can confirm reports are arriving in the console.
+        Crashlytics.crashlytics().log("App launched — Crashlytics collection enabled.")
+        
         NSTextAttachment.registerViewProviderClass(PillAttachmentViewProvider.self, forFileType: InfoPlistReader.main.pillsUTType)
         return true
     }
     
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        // Forward the APNs token to Firebase so FCM and Crashlytics work correctly.
+        Messaging.messaging().apnsToken = deviceToken
         callbacks.send(.registeredNotifications(deviceToken: deviceToken))
     }
     

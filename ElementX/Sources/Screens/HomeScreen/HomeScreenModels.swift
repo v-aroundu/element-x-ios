@@ -50,6 +50,7 @@ enum HomeScreenViewAction {
     
     case acceptInvite(roomIdentifier: String)
     case declineInvite(roomIdentifier: String)
+    case toggleLocationTracking
 }
 
 enum HomeScreenRoomListMode: CustomStringConvertible {
@@ -100,6 +101,10 @@ struct HomeScreenViewState: BindableState {
     var requiresExtraAccountSetup = false
         
     var rooms: [HomeScreenRoom] = []
+    
+    /// A snapshot of all rooms (unfiltered) used for client-side last-message search.
+    var allRoomsSnapshot: [HomeScreenRoom] = []
+    
     var roomListMode: HomeScreenRoomListMode = .skeletons
     
     var hasPendingInvitations = false
@@ -118,6 +123,28 @@ struct HomeScreenViewState: BindableState {
     var visibleRooms: [HomeScreenRoom] {
         if roomListMode == .skeletons {
             return placeholderRooms
+        }
+        
+        // When searching, merge SDK name-matched rooms (state.rooms) with
+        // client-side last-message matches from the full allRoomsSnapshot.
+        if bindings.isSearchFieldFocused, !bindings.searchQuery.isEmpty {
+            let query = bindings.searchQuery.lowercased()
+            
+            // SDK already filtered rooms by name – keep them all.
+            var resultIDs = Set(rooms.map(\.id))
+            var combined = rooms
+            
+            // Also search last message content across all known rooms.
+            for room in allRoomsSnapshot {
+                guard !resultIDs.contains(room.id) else { continue }
+                if let lastMessage = room.lastMessage,
+                   String(lastMessage.characters).lowercased().contains(query) {
+                    resultIDs.insert(room.id)
+                    combined.append(room)
+                }
+            }
+            
+            return combined
         }
         
         return rooms
@@ -149,6 +176,9 @@ struct HomeScreenViewState: BindableState {
     var shouldShowBanner: Bool {
         securityBannerMode.isShown || shouldShowNewSoundBanner
     }
+    
+    /// Whether background location tracking is currently active.
+    var isLocationTrackingActive = false
 }
 
 struct HomeScreenViewStateBindings {

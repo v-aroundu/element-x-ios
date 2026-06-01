@@ -106,7 +106,8 @@ class PinnedEventsTimelineFlowCoordinator: FlowCoordinatorProtocol {
                                                                timelineController: timelineController,
                                                                appMediator: flowParameters.appMediator,
                                                                analytics: flowParameters.analytics,
-                                                               userIndicatorController: flowParameters.userIndicatorController)
+                                                               userIndicatorController: flowParameters.userIndicatorController,
+                                                               locationPingService: nil) // view-only mode, no ping needed
         let coordinator = StaticLocationScreenCoordinator(parameters: params)
         
         coordinator.actions.sink { [weak self] action in

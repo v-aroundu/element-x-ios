@@ -26,11 +26,11 @@ struct RoomStateEventStringBuilder {
         
         let senderIsYou = isOutgoing
         let memberIsYou = memberUserID == userID
-        let member = memberDisplayName ?? memberUserID
+        let member = memberDisplayName ?? memberUserID.matrixIDLocalpart
         let senderDisplayName = if shouldDisambiguateDisplayNames {
-            sender.disambiguatedDisplayName ?? sender.id
+            sender.disambiguatedDisplayName ?? sender.id.matrixIDLocalpart
         } else {
-            sender.displayName ?? sender.id
+            sender.displayName ?? sender.id.matrixIDLocalpart
         }
         
         switch change {
@@ -139,9 +139,9 @@ struct RoomStateEventStringBuilder {
     
     func buildString(for state: OtherState, sender: TimelineItemSender, isOutgoing: Bool) -> String? {
         let displayName = if shouldDisambiguateDisplayNames {
-            sender.disambiguatedDisplayName ?? sender.id
+            sender.disambiguatedDisplayName ?? sender.id.matrixIDLocalpart
         } else {
-            sender.displayName ?? sender.id
+            sender.displayName ?? sender.id.matrixIDLocalpart
         }
         
         switch state {

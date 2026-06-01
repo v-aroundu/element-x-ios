@@ -186,6 +186,33 @@ lane :upload_dsyms_to_sentry do |options|
   end
 end
 
+$firebase_retry=0
+lane :upload_dsyms_to_firebase do |options|
+  dsym_path = options[:dsym_path]
+  UI.user_error!("Invalid DSYM path.") unless !dsym_path.to_s.empty?
+
+  gsp_path = File.join(Dir.pwd, "..", "ElementX", "SupportingFiles", "GoogleService-Info.plist")
+  UI.user_error!("GoogleService-Info.plist not found at #{gsp_path}") unless File.exist?(gsp_path)
+
+  begin
+    upload_symbols_to_crashlytics(
+      dsym_path: dsym_path,
+      gsp_path: gsp_path
+    )
+  rescue => exception
+    $firebase_retry += 1
+
+    if $firebase_retry <= 3
+      UI.message "Firebase dSYM upload failed, retrying (attempt #{$firebase_retry})..."
+      upload_dsyms_to_firebase options
+    else
+      UI.error "Firebase dSYM upload failed after 3 retries: #{exception.message}"
+      # Don't fail the build — Sentry is the primary crash reporter.
+      # Firebase will still receive the dSYMs from the Xcode build phase on local builds.
+    end
+  end
+end
+
 lane :release_to_github do
   api_token = ENV["GITHUB_TOKEN"]
   UI.user_error!("Invalid GitHub API token.") unless !api_token.to_s.empty?

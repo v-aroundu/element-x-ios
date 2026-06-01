@@ -1138,7 +1138,8 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
                                                                timelineController: timelineController,
                                                                appMediator: flowParameters.appMediator,
                                                                analytics: flowParameters.analytics,
-                                                               userIndicatorController: flowParameters.userIndicatorController)
+                                                               userIndicatorController: flowParameters.userIndicatorController,
+                                                               locationPingService: LocationPingService(clientProxy: flowParameters.userSession.clientProxy))
         let coordinator = StaticLocationScreenCoordinator(parameters: params)
         
         coordinator.actions.sink { [weak self] action in

@@ -27,14 +27,14 @@ struct UserProfileListRow: View {
         if let membershipText = membership?.localizedDescription {
             return membershipText
         } else if user.displayName != nil {
-            return user.userID
+            return user.userID.matrixIDLocalpart
         } else {
             return nil
         }
     }
     
     var body: some View {
-        ListRow(label: .avatar(title: user.displayName ?? user.userID,
+        ListRow(label: .avatar(title: user.displayName ?? user.userID.matrixIDLocalpart,
                                description: subtitle,
                                icon: avatar,
                                role: isUnknownProfile ? .error : nil),

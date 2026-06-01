@@ -32,6 +32,7 @@ enum RoomScreenViewAction {
     case dismissKnockRequests
     case viewKnockRequests
     case displaySuccessorRoom
+    case toggleLocationTracking
 }
 
 struct RoomScreenViewState: BindableState {
@@ -85,6 +86,9 @@ struct RoomScreenViewState: BindableState {
     var roomHistorySharingState: RoomHistorySharingState?
     
     var footerDetails: RoomScreenFooterViewDetails?
+    
+    /// Whether background location tracking is currently active.
+    var isLocationTrackingActive = false
     
     var bindings = RoomScreenViewStateBindings()
 }

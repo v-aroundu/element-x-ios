@@ -70,8 +70,15 @@ struct StaticLocationScreen: View {
 
         if context.viewState.isLocationPickerMode {
             ToolbarItemGroup(placement: .bottomBar) {
-                selectLocationButton
-                Spacer()
+                if context.viewState.isLiveLocationActive {
+                    Spacer()
+                    shareLiveLocationButton
+                    Spacer()
+                } else {
+                    selectLocationButton
+                    Spacer()
+                    shareLiveLocationButton
+                }
             }
         }
     }
@@ -103,6 +110,39 @@ struct StaticLocationScreen: View {
                 CompoundIcon(\.shareIos)
                 Text(context.viewState.isSharingUserLocation ? L10n.screenShareMyLocationAction : L10n.screenShareThisLocationAction)
             }
+        }
+    }
+    
+    private var shareLiveLocationButton: some View {
+        Button {
+            if context.viewState.isLiveLocationActive {
+                context.send(viewAction: .stopLiveLocation)
+            } else {
+                context.send(viewAction: .shareLiveLocation)
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: context.viewState.isLiveLocationActive ? "location.fill" : "location.circle")
+                    .foregroundStyle(context.viewState.isLiveLocationActive ? Color.red : Color.compound.textActionPrimary)
+                Text(context.viewState.isLiveLocationActive ? "Stop live sharing" : "Share live location")
+                    .foregroundStyle(context.viewState.isLiveLocationActive ? Color.red : Color.compound.textActionPrimary)
+            }
+            .font(.compound.bodyMDSemibold)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(
+                context.viewState.isLiveLocationActive
+                    ? Color.red.opacity(0.15)
+                    : Color.compound.bgActionPrimaryRest.opacity(0.12),
+                in: Capsule()
+            )
+            .overlay(
+                Capsule()
+                    .strokeBorder(
+                        context.viewState.isLiveLocationActive ? Color.red.opacity(0.4) : Color.clear,
+                        lineWidth: 1
+                    )
+            )
         }
     }
     

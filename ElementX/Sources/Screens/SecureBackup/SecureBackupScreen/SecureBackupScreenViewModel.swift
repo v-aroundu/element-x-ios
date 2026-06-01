@@ -15,6 +15,9 @@ class SecureBackupScreenViewModel: SecureBackupScreenViewModelType, SecureBackup
     private let secureBackupController: SecureBackupControllerProtocol
     private let userIndicatorController: UserIndicatorControllerProtocol
     
+    /// Guards against triggering `enableBackup()` multiple times while an enable is already in flight.
+    private var isEnablingBackup = false
+    
     private var actionsSubject: PassthroughSubject<SecureBackupScreenViewModelAction, Never> = .init()
     var actions: AnyPublisher<SecureBackupScreenViewModelAction, Never> {
         actionsSubject.eraseToAnyPublisher()
@@ -54,13 +57,21 @@ class SecureBackupScreenViewModel: SecureBackupScreenViewModelType, SecureBackup
             let keyBackupState = secureBackupController.keyBackupState.value
             switch (keyBackupState, enable) {
             case (.unknown, true):
+                // Prevent double-triggering if an enable is already in flight.
+                guard !isEnablingBackup else {
+                    // Keep the toggle in sync with the real state.
+                    state.bindings.keyStorageEnabled = keyBackupState.keyStorageToggleState
+                    break
+                }
                 state.bindings.keyStorageEnabled = keyBackupState.keyStorageToggleState // Reset the toggle in case enabling fails
                 Task { await enableBackup() }
             case (.enabled, false):
                 state.bindings.keyStorageEnabled = keyBackupState.keyStorageToggleState // Reset the toggle in case the user cancels
                 actionsSubject.send(.disableKeyBackup)
             default:
-                break
+                // Toggling while backup is in a transitional state (enabling/disabling) — 
+                // bring the toggle back in sync with the real state to avoid UI drift.
+                state.bindings.keyStorageEnabled = keyBackupState.keyStorageToggleState
             }
         }
     }
@@ -68,6 +79,9 @@ class SecureBackupScreenViewModel: SecureBackupScreenViewModelType, SecureBackup
     // MARK: - Private
     
     private func enableBackup() async {
+        guard !isEnablingBackup else { return }
+        isEnablingBackup = true
+        
         let loadingIndicatorIdentifier = "SecureBackupScreenLoading"
         userIndicatorController.submitIndicator(.init(id: loadingIndicatorIdentifier, type: .modal, title: L10n.commonLoading, persistent: true))
         switch await secureBackupController.enable() {
@@ -79,6 +93,7 @@ class SecureBackupScreenViewModel: SecureBackupScreenViewModelType, SecureBackup
         }
         
         userIndicatorController.retractIndicatorWithId(loadingIndicatorIdentifier)
+        isEnablingBackup = false
     }
 }
 

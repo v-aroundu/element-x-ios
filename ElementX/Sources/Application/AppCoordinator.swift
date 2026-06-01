@@ -210,12 +210,11 @@ class AppCoordinator: AppCoordinatorProtocol, AuthenticationFlowCoordinatorDeleg
     }
     
     func toPresentable() -> AnyView {
-        AnyView(navigationRootCoordinator.toPresentable()
+        AnyView(self.navigationRootCoordinator.toPresentable()
             .environment(\.analyticsService, ServiceLocator.shared.analytics)
-            .onReceive(appSettings.$appAppearance) { [weak self] appAppearance in
+            .onReceive(self.appSettings.$appAppearance) { [weak self] appAppearance in
                 guard let self else { return }
-                    
-                windowManager.windows.forEach { window in
+                self.windowManager.windows.forEach { window in
                     // Unfortunately .preferredColorScheme doesn't propagate properly throughout the app when changed
                     window.overrideUserInterfaceStyle = appAppearance.interfaceStyle
                 }

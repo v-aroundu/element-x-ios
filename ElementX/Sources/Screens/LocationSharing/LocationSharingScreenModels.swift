@@ -45,6 +45,9 @@ struct StaticLocationScreenViewState: BindableState {
         bindings.isLocationAuthorized == true && bindings.showsUserLocationMode == .showAndFollow
     }
     
+    /// Whether a live location sharing session is currently active (pinging the backend)
+    var isLiveLocationActive = false
+    
     var initialMapCenter: CLLocationCoordinate2D {
         switch interactionMode {
         case .picker:
@@ -130,6 +133,8 @@ struct StaticLocationScreenBindings {
 enum StaticLocationScreenViewAction {
     case close
     case selectLocation
+    case shareLiveLocation
+    case stopLiveLocation
     case centerToUser
     case userDidPan
 }

@@ -15,6 +15,7 @@ enum A11yIdentifiers {
     static let appLockSetupBiometricsScreen = AppLockSetupBiometricsScreen()
     static let appLockSetupPINScreen = AppLockSetupPINScreen()
     static let appLockSetupSettingsScreen = AppLockSetupSettingsScreen()
+    static let appLockPromptScreen = AppLockPromptScreen()
     static let bugReportScreen = BugReportScreen()
     static let changeServerScreen = ChangeServer()
     static let encryptionResetScreen = EncryptionResetScreen()
@@ -73,6 +74,11 @@ enum A11yIdentifiers {
     struct AppLockSetupSettingsScreen {
         let changePIN = "app_lock_setup_settings-change_pin"
         let removePIN = "app_lock_setup_settings-remove_pin"
+    }
+
+    struct AppLockPromptScreen {
+        let enable = "app_lock_prompt-enable"
+        let skip = "app_lock_prompt-skip"
     }
 
     struct AnalyticsPromptScreen {

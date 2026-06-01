@@ -16,6 +16,7 @@ struct StaticLocationScreenCoordinatorParameters {
     let appMediator: AppMediatorProtocol
     let analytics: AnalyticsService
     let userIndicatorController: UserIndicatorControllerProtocol
+    let locationPingService: LocationPingServiceProtocol?
 }
 
 enum StaticLocationScreenCoordinatorAction {
@@ -39,6 +40,7 @@ final class StaticLocationScreenCoordinator: CoordinatorProtocol {
         viewModel = StaticLocationScreenViewModel(interactionMode: parameters.interactionMode,
                                                   mapURLBuilder: parameters.mapURLBuilder,
                                                   timelineController: parameters.timelineController,
+                                                  locationPingService: parameters.locationPingService,
                                                   analytics: parameters.analytics,
                                                   userIndicatorController: parameters.userIndicatorController)
     }

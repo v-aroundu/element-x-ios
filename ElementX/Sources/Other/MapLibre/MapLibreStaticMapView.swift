@@ -45,6 +45,10 @@ struct MapLibreStaticMapView<PinAnnotation: View>: View {
                     switch phase {
                     case .empty:
                         placeholderImage
+                            .overlay {
+                                ProgressView()
+                                    .tint(.white)
+                            }
                     case .success(let image):
                         ZStack {
                             image
@@ -53,7 +57,8 @@ struct MapLibreStaticMapView<PinAnnotation: View>: View {
                             pinAnnotationView
                         }
                     case .failure:
-                        errorView
+                        // Show the blurred placeholder — tapping the whole bubble opens the viewer
+                        placeholderImage
                     @unknown default:
                         EmptyView()
                     }
@@ -70,20 +75,6 @@ struct MapLibreStaticMapView<PinAnnotation: View>: View {
         Image(asset: Asset.Images.mapBlurred)
             .resizable()
             .scaledToFill()
-    }
-
-    private var errorView: some View {
-        Button {
-            fetchAttempt += 1
-        } label: {
-            placeholderImage
-                .overlay {
-                    VStack(spacing: 0) {
-                        Image(systemName: "arrow.clockwise")
-                        Text(L10n.actionStaticMapLoad)
-                    }
-                }
-        }
     }
 }
 

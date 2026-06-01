@@ -6,6 +6,7 @@
 // Please see LICENSE files in the repository root for full details.
 //
 
+import Lottie
 import SwiftUI
 
 /// The app's logo styled to fit on various launch pages.
@@ -26,14 +27,20 @@ struct AuthenticationStartLogo: View {
     
     var body: some View {
         if hideBrandChrome {
-            Image(asset: Asset.Images.appLogo)
+            LottieView(animation: .named("splash"))
+                .playing(loopMode: .loop)
+                .scaledToFit()
         } else {
             brandLogo
         }
     }
     
     private var brandLogo: some View {
-        Image(asset: Asset.Images.appLogo)
+        LottieView(animation: .named("splash"))
+            .playing(loopMode: .loop)
+            .scaledToFit()
+            .frame(width: 96, height: 96)
+            .clipShape(RoundedRectangle(cornerRadius: 22))
             .background {
                 Circle()
                     .inset(by: 1)

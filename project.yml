@@ -119,6 +119,9 @@ packages:
   Dynamic:
     url: https://github.com/mhdhejazi/Dynamic
     exactVersion: 1.2
+  FirebaseSDK:
+    url: https://github.com/firebase/firebase-ios-sdk
+    majorVersion: 12.10.0
   GZIP:
     url: https://github.com/nicklockwood/GZIP
     minorVersion: 1.3.2
@@ -161,6 +164,9 @@ packages:
   Version:
     url: https://github.com/mxcl/Version
     minorVersion: 2.2.0
+  Lottie:
+    url: https://github.com/airbnb/lottie-spm
+    from: 4.5.0
 
 aggregateTargets:
   Periphery:

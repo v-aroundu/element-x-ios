@@ -9,19 +9,19 @@
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=element-x-ios&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=element-x-ios)
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=element-x-ios&metric=bugs)](https://sonarcloud.io/summary/new_code?id=element-x-ios)
 
-# Element X iOS
+# aroundU Messenger iOS
 
-Element X iOS is the next-generation [Matrix](https://matrix.org/) client provided by [Element](https://element.io/).
+aroundU Messenger iOS is the next-generation [Matrix](https://matrix.org/) client provided by [Element](https://element.io/).
 
 Compared to the previous-generation [Element Classic](https://github.com/element-hq/element-ios), it is a total rewrite using the [Matrix Rust SDK](https://github.com/matrix-org/matrix-rust-sdk) underneath and targeting devices running iOS 17+.
 
 ## Rust SDK
 
-Element X leverages the [Matrix Rust SDK](https://github.com/matrix-org/matrix-rust-sdk) through an FFI layer exposed as a [swift package](https://github.com/matrix-org/matrix-rust-components-swift) that the final client can directly import and use. We're doing this as a way to share code between platforms, with [Element X Android](https://github.com/element-hq/element-x-android) using the same SDK.
+aroundU Messenger leverages the [Matrix Rust SDK](https://github.com/matrix-org/matrix-rust-sdk) through an FFI layer exposed as a [swift package](https://github.com/matrix-org/matrix-rust-components-swift) that the final client can directly import and use. We're doing this as a way to share code between platforms, with [aroundU Messenger Android](https://github.com/element-hq/element-x-android) using the same SDK.
 
 ## Status
 
-This project is actively developed and supported. New users are recommended to use Element X instead of the previous-generation app.
+This project is actively developed and supported. New users are recommended to use aroundU Messenger instead of the previous-generation app.
 
 ## Contributing
 
@@ -35,7 +35,7 @@ Please refer to the [setting up a development environment](CONTRIBUTING.md#setti
 
 ## Support
 
-When you are experiencing an issue on Element X iOS, please first search in [GitHub issues](https://github.com/element-hq/element-x-ios/issues)
+When you are experiencing an issue on aroundU Messenger iOS, please first search in [GitHub issues](https://github.com/element-hq/element-x-ios/issues)
 and then in [#element-x-ios:matrix.org](https://matrix.to/#/#element-x-ios:matrix.org).
 If after your research you still have a question, ask at [#element-x-ios:matrix.org](https://matrix.to/#/#element-x-ios:matrix.org). Otherwise feel free to create a GitHub issue if you encounter a bug or a crash, by explaining clearly in detail what happened. You can also perform bug reporting (Rageshake) from the Element application by going to the application settings. This is especially recommended when you encounter a crash.
 

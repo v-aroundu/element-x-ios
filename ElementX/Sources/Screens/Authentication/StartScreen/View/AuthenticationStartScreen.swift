@@ -66,22 +66,22 @@ struct AuthenticationStartScreen: View {
                 AuthenticationStartLogo(hideBrandChrome: context.viewState.hideBrandChrome)
             }
             
-            Spacer()
+            // Spacer()
             
-            if !context.viewState.hideBrandChrome {
-                VStack(spacing: 8) {
-                    Text(L10n.screenOnboardingWelcomeTitle)
-                        .font(.compound.headingLGBold)
-                        .foregroundColor(.compound.textPrimary)
-                        .multilineTextAlignment(.center)
-                    Text(L10n.screenOnboardingWelcomeMessage(InfoPlistReader.main.productionAppName))
-                        .font(.compound.bodyLG)
-                        .foregroundColor(.compound.textSecondary)
-                        .multilineTextAlignment(.center)
-                }
-                .padding()
-                .fixedSize(horizontal: false, vertical: true)
-            }
+            // if !context.viewState.hideBrandChrome {
+            //     VStack(spacing: 8) {
+            //          Text(L10n.screenOnboardingWelcomeTitle)
+            //              .font(.compound.headingLGBold)
+            //              .foregroundColor(.compound.textPrimary)
+            //              .multilineTextAlignment(.center)
+            //         Text(L10n.screenOnboardingWelcomeMessage(InfoPlistReader.main.productionAppName))
+            //             .font(.compound.bodyLG)
+            //             .foregroundColor(.compound.textSecondary)
+            //             .multilineTextAlignment(.center)
+            //     }
+            //     .padding()
+            //     .fixedSize(horizontal: false, vertical: true)
+            // }
             
             Spacer()
         }
@@ -93,13 +93,13 @@ struct AuthenticationStartScreen: View {
     /// The main action buttons.
     var buttons: some View {
         VStack(spacing: 16) {
-            if context.viewState.showQRCodeLoginButton {
-                Button { context.send(viewAction: .loginWithQR) } label: {
-                    Label(L10n.screenOnboardingSignInWithQrCode, icon: \.qrCode)
-                }
-                .buttonStyle(.compound(.primary))
-                .accessibilityIdentifier(A11yIdentifiers.authenticationStartScreen.signInWithQr)
-            }
+//            if context.viewState.showQRCodeLoginButton {
+//                Button { context.send(viewAction: .loginWithQR) } label: {
+//                    Label(L10n.screenOnboardingSignInWithQrCode, icon: \.qrCode)
+//                }
+//                .buttonStyle(.compound(.primary))
+//                .accessibilityIdentifier(A11yIdentifiers.authenticationStartScreen.signInWithQr)
+//            }
             
             Button { context.send(viewAction: .login) } label: {
                 Text(context.viewState.loginButtonTitle)
@@ -107,12 +107,12 @@ struct AuthenticationStartScreen: View {
             .buttonStyle(.compound(.primary))
             .accessibilityIdentifier(A11yIdentifiers.authenticationStartScreen.signIn)
             
-            if context.viewState.showCreateAccountButton {
-                Button { context.send(viewAction: .register) } label: {
-                    Text(L10n.screenCreateAccountTitle)
-                }
-                .buttonStyle(.compound(.tertiary))
-            }
+//            if context.viewState.showCreateAccountButton {
+//                Button { context.send(viewAction: .register) } label: {
+//                    Text(L10n.screenCreateAccountTitle)
+//                }
+//                .buttonStyle(.compound(.tertiary))
+//            }
         }
         .padding(.horizontal, verticalSizeClass == .compact ? 128 : 24)
         .readableFrame()

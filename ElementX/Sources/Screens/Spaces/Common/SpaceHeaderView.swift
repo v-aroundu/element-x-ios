@@ -28,10 +28,6 @@ struct SpaceHeaderView: View {
                     .foregroundStyle(.compound.textPrimary)
                     .multilineTextAlignment(.center)
                 
-                if let alias = spaceServiceRoom.canonicalAlias {
-                    CopyTextButton(content: alias)
-                }
-                
                 spaceDetails
                 
                 JoinedMembersBadgeView(heroes: spaceServiceRoom.heroes,

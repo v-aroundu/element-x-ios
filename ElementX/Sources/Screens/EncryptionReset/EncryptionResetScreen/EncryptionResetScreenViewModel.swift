@@ -45,6 +45,11 @@ class EncryptionResetScreenViewModel: EncryptionResetScreenViewModelType, Encryp
                                              })
         case .cancel:
             actionsSubject.send(.cancel)
+        case .openOIDCURL:
+            guard let url = state.oidcApprovalURL else { return }
+            actionsSubject.send(.openURL(url))
+        case .continueAfterOIDCApproval:
+            Task { await resetWithOIDCAuthorisation() }
         }
     }
     
@@ -59,15 +64,12 @@ class EncryptionResetScreenViewModel: EncryptionResetScreenViewModelType, Encryp
     private func startResetFlow() async {
         showLoadingIndicator()
         
-        defer {
-            hideLoadingIndicator()
-        }
-        
         switch await clientProxy.resetIdentity() {
         case .success(let handle):
             // If the handle is missing then interactive authentication wasn't
             // necessary and the reset proceeded as normal
             guard let handle else {
+                hideLoadingIndicator()
                 actionsSubject.send(.resetFinished)
                 return
             }
@@ -76,6 +78,7 @@ class EncryptionResetScreenViewModel: EncryptionResetScreenViewModelType, Encryp
             
             switch handle.authType() {
             case .uiaa:
+                // Homeserver supports password-based UIAA — show the password entry screen.
                 let passwordPublisher = PassthroughSubject<String, Never>()
                 passwordCancellable = passwordPublisher.sink { [weak self] password in
                     guard let self else { return }
@@ -83,20 +86,28 @@ class EncryptionResetScreenViewModel: EncryptionResetScreenViewModelType, Encryp
                     Task { await self.resetWith(password: password) }
                 }
                 
+                // Hide the loading indicator before navigating to the password screen
+                // so the persistent modal does not block the pushed screen.
+                hideLoadingIndicator()
                 actionsSubject.send(.requestPassword(passwordPublisher: passwordPublisher))
-            case .oidc(let oidcInfo):
-                guard let url = URL(string: oidcInfo.approvalUrl) else {
-                    fatalError("Invalid URL received through identity reset handle: \(oidcInfo.approvalUrl)")
+                
+            case .oidc(let info):
+                // Homeserver requires OIDC approval. Show the in-app "open browser" UI.
+                // The user opens the approval URL, approves in the browser, then comes back
+                // and taps "Continue" which triggers .continueAfterOIDCApproval.
+                guard let approvalURL = URL(string: info.approvalUrl) else {
+                    MXLog.error("Invalid OIDC approval URL: \(info.approvalUrl)")
+                    hideLoadingIndicator()
+                    showErrorToast()
+                    return
                 }
                 
                 hideLoadingIndicator()
-                
-                actionsSubject.send(.requestOIDCAuthorisation(url: url))
-                
-                await resetWithOIDCAuthorisation()
+                state.oidcApprovalURL = approvalURL
             }
         case .failure(let error):
             MXLog.error("Failed resetting encryption with error \(error)")
+            hideLoadingIndicator()
             showErrorToast()
         }
     }
@@ -108,15 +119,13 @@ class EncryptionResetScreenViewModel: EncryptionResetScreenViewModelType, Encryp
         
         showLoadingIndicator()
         
-        defer {
-            hideLoadingIndicator()
-        }
-        
         do {
             try await identityResetHandle.reset(auth: .password(passwordDetails: .init(identifier: clientProxy.userID, password: password)))
+            hideLoadingIndicator()
             actionsSubject.send(.resetFinished)
         } catch {
             MXLog.error("Failed resetting encryption with error \(error)")
+            hideLoadingIndicator()
             showErrorToast()
         }
     }
@@ -126,11 +135,15 @@ class EncryptionResetScreenViewModel: EncryptionResetScreenViewModelType, Encryp
             fatalError("Requested reset flow continuation without a stored handle")
         }
         
+        showLoadingIndicator()
+        
         do {
             try await identityResetHandle.reset(auth: nil)
+            hideLoadingIndicator()
             actionsSubject.send(.resetFinished)
         } catch {
-            MXLog.error("Failed resetting encryption with error \(error)")
+            MXLog.error("Failed resetting encryption after OIDC approval with error \(error)")
+            hideLoadingIndicator()
             showErrorToast()
         }
     }

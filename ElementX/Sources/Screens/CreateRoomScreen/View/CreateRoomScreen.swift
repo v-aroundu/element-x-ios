@@ -16,15 +16,6 @@ struct CreateRoomScreen: View {
     private enum Focus {
         case name
         case topic
-        case alias
-    }
-    
-    private var aliasBinding: Binding<String> {
-        .init(get: {
-            context.viewState.aliasLocalPart
-        }, set: {
-            context.send(viewAction: .updateAliasLocalPart($0))
-        })
     }
     
     private var roomNameBinding: Binding<String> {
@@ -43,9 +34,8 @@ struct CreateRoomScreen: View {
                 selectSpaceSection
             }
             roomAccessSection
-            if !context.viewState.roomAccessType.isVisibilityPrivate {
-                roomAliasSection
-            }
+            // Address field is intentionally hidden — alias is auto-generated from the room name
+            // and sent silently to the backend using the default homeserver (messenger.aroundu.app).
         }
         .compoundList()
         .track(screen: .CreateRoom)
@@ -54,7 +44,6 @@ struct CreateRoomScreen: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { toolbar }
         .alert(item: $context.alertInfo)
-        .shouldScrollOnKeyboardDidShow(focus == .alias, to: Focus.alias)
         .sheet(isPresented: $context.showSpaceSelectionSheet) {
             CreateRoomSpaceSelectionSheet(context: context)
         }
@@ -198,35 +187,11 @@ struct CreateRoomScreen: View {
         }
     }
     
-    private var roomAliasSection: some View {
-        Section {
-            EditRoomAddressListRow(aliasLocalPart: aliasBinding,
-                                   serverName: context.viewState.serverName,
-                                   shouldDisplayError: context.viewState.aliasErrors.errorDescription != nil)
-                .focused($focus, equals: .alias)
-                .id(Focus.alias)
-        } header: {
-            Text(L10n.screenCreateRoomRoomAddressSectionTitle)
-                .compoundListSectionHeader()
-        } footer: {
-            VStack(alignment: .leading, spacing: 12) {
-                if let errorDescription = context.viewState.aliasErrors.errorDescription {
-                    Label(errorDescription, icon: \.errorSolid, iconSize: .xSmall, relativeTo: .compound.bodySM)
-                        .foregroundStyle(.compound.textCriticalPrimary)
-                        .font(.compound.bodySM)
-                }
-                Text(L10n.screenCreateRoomRoomAddressSectionFooter)
-                    .compoundListSectionFooter()
-                    .font(.compound.bodySM)
-            }
-        }
-    }
-    
     private var selectSpaceSection: some View {
         Section {
             if let selectedSpace = context.selectedSpace {
                 ListRow(label: .avatar(title: selectedSpace.name,
-                                       description: selectedSpace.canonicalAlias,
+                                       description: nil,
                                        icon: RoomAvatarImage(avatar: selectedSpace.avatar,
                                                              avatarSize: .room(on: .createRoomSelectSpace),
                                                              mediaProvider: context.mediaProvider)),

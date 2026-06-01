@@ -251,6 +251,11 @@ class ClientProxy: ClientProxyProtocol {
             }
             .store(in: &cancellables)
 
+        // DEBUG: Print access token — remove before production
+        if let session = try? client.session() {
+            MXLog.warning("🔑 DEBUG access token: \(session.accessToken)")
+        }
+        
         loadUserAvatarURLFromCache()
         
         ignoredUsersListenerTaskHandle = client.subscribeToIgnoredUsers(listener: SDKListener { [weak self] ignoredUsers in
@@ -332,6 +337,10 @@ class ClientProxy: ClientProxyProtocol {
 
     var homeserver: String {
         client.homeserver()
+    }
+    
+    var accessToken: String? {
+        try? client.session().accessToken
     }
     
     var canDeactivateAccount: Bool {

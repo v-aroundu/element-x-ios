@@ -24,16 +24,8 @@ struct LoginScreen: View {
                     .padding(.top, UIConstants.titleTopPaddingToNavigationBar)
                     .padding(.bottom, 32)
                 
-                switch context.viewState.loginMode {
-                case .password:
-                    loginForm
-                case .oidc:
-                    // This should never be shown.
-                    ProgressView()
-                default:
-                    // This should never be shown either.
-                    loginUnavailableText
-                }
+                // Always show the login form — OIDC is bypassed in favour of password login.
+                loginForm
             }
             .readableFrame()
             .padding(.horizontal, 16)

@@ -27,7 +27,7 @@ extension RoomMemberProxyMock {
         displayName = configuration.displayName
         
         if let displayName = configuration.displayName {
-            disambiguatedDisplayName = "\(displayName) (\(userID))"
+            disambiguatedDisplayName = "\(displayName) (\(userID.matrixIDLocalpart))"
         }
         
         avatarURL = configuration.avatarURL

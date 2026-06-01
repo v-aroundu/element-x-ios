@@ -19,7 +19,7 @@ struct InviteUsersScreenSelectedItem: View {
             avatar
                 .accessibilityHidden(true)
             
-            Text(user.displayName ?? user.userID)
+            Text(user.displayName ?? user.userID.matrixIDLocalpart)
                 .font(.compound.bodySM)
                 .foregroundColor(.compound.textSecondary)
                 .lineLimit(1)

@@ -106,6 +106,9 @@ protocol ClientProxyProtocol: AnyObject {
 
     var homeserver: String { get }
     
+    /// The current Matrix access token. May change over time if OIDC token refresh occurs.
+    var accessToken: String? { get }
+    
     var canDeactivateAccount: Bool { get }
     
     var userIDServerName: String? { get }

@@ -69,7 +69,7 @@ struct JoinRoomScreenViewState: BindableState {
     
     var title: String {
         if isDMInvite, let inviter = roomDetails?.inviter {
-            return inviter.displayName ?? inviter.id
+            return inviter.displayName ?? inviter.id.matrixIDLocalpart
         } else {
             return roomDetails?.name ?? L10n.screenJoinRoomTitleNoPreview
         }

@@ -11,12 +11,18 @@ import Foundation
 
 enum EncryptionResetScreenViewModelAction {
     case requestPassword(passwordPublisher: PassthroughSubject<String, Never>)
-    case requestOIDCAuthorisation(url: URL)
+    /// The homeserver requires OIDC approval. Open `url` in a web browser; fire
+    /// `completionPublisher` (with `true`) once the user returns to the app after
+    /// approving, or `false` if they cancelled.
+    case openURL(URL)
     case resetFinished
     case cancel
 }
 
 struct EncryptionResetScreenViewState: BindableState {
+    /// When non-nil the OIDC approval step is active: show the "open browser + continue" UI.
+    var oidcApprovalURL: URL?
+    
     private let listItem3AttributedText = {
         let boldPlaceholder = "{bold}"
         var finalString = AttributedString(L10n.screenCreateNewRecoveryKeyListItem3(boldPlaceholder))
@@ -46,4 +52,8 @@ struct EncryptionResetScreenViewStateBindings {
 enum EncryptionResetScreenViewAction {
     case reset
     case cancel
+    /// User taps "Open in Browser" during the OIDC approval step.
+    case openOIDCURL
+    /// User taps "I've approved — Continue" after returning from the browser.
+    case continueAfterOIDCApproval
 }

@@ -20,8 +20,11 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
     private let appSettings: AppSettings
     private let notificationManager: NotificationManagerProtocol
     private let userIndicatorController: UserIndicatorControllerProtocol
+    private let backgroundLocationTracker: BackgroundLocationTrackerProtocol
     
     private let roomSummaryProvider: RoomSummaryProviderProtocol?
+    /// The alternate (all-rooms) provider — used to keep a full snapshot for last-message search.
+    private let alternateRoomSummaryProvider: RoomSummaryProviderProtocol?
     
     private var actionsSubject: PassthroughSubject<HomeScreenViewModelAction, Never> = .init()
     var actions: AnyPublisher<HomeScreenViewModelAction, Never> {
@@ -34,16 +37,21 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
          appSettings: AppSettings,
          analyticsService: AnalyticsService,
          notificationManager: NotificationManagerProtocol,
-         userIndicatorController: UserIndicatorControllerProtocol) {
+         userIndicatorController: UserIndicatorControllerProtocol,
+         backgroundLocationTracker: BackgroundLocationTrackerProtocol? = nil) {
         self.userSession = userSession
         self.analyticsService = analyticsService
         self.appSettings = appSettings
         self.notificationManager = notificationManager
         self.userIndicatorController = userIndicatorController
+        self.backgroundLocationTracker = backgroundLocationTracker ?? BackgroundLocationTracker(
+            pingService: LocationPingService(clientProxy: userSession.clientProxy)
+        )
         
         spaceFilterSubject = CurrentValueSubject<SpaceServiceFilter?, Never>(nil)
         
         roomSummaryProvider = userSession.clientProxy.roomSummaryProvider
+        alternateRoomSummaryProvider = userSession.clientProxy.alternateRoomSummaryProvider
         
         super.init(initialViewState: .init(userID: userSession.clientProxy.userID,
                                            spaceFiltersEnabled: appSettings.spaceFiltersEnabled,
@@ -267,6 +275,13 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
             }
         case .declineInvite(let roomIdentifier):
             Task { await showDeclineInviteConfirmationAlert(roomID: roomIdentifier) }
+        case .toggleLocationTracking:
+            if backgroundLocationTracker.isTracking {
+                backgroundLocationTracker.stopTracking()
+            } else {
+                backgroundLocationTracker.startTracking()
+            }
+            state.isLocationTrackingActive = backgroundLocationTracker.isTracking
         }
     }
     
@@ -290,7 +305,16 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
             roomSummaryProvider?.setFilter(.excludeAll)
         } else {
             if state.bindings.isSearchFieldFocused {
-                roomSummaryProvider?.setFilter(.search(query: state.bindings.searchQuery))
+                let query = state.bindings.searchQuery
+                if query.isEmpty {
+                    // Focus but no query yet — show nothing while user types
+                    roomSummaryProvider?.setFilter(.excludeAll)
+                } else {
+                    // Use the SDK's search filter so it returns name-matched rooms
+                    // across all pages. Last-message matches come from allRoomsSnapshot
+                    // via client-side filtering in visibleRooms.
+                    roomSummaryProvider?.setFilter(.search(query: query))
+                }
             } else {
                 if let spaceFilter = spaceFilterSubject.value {
                     roomSummaryProvider?.setFilter(.rooms(roomsIDs: spaceFilter.descendants,
@@ -321,6 +345,21 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.updateRooms()
+            }
+            .store(in: &cancellables)
+        
+        // Subscribe to the alternate (all-rooms) provider to keep a full snapshot
+        // for client-side last-message search.
+        alternateRoomSummaryProvider?.roomListPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] summaries in
+                guard let self else { return }
+                let seenInvites = self.appSettings.seenInvites
+                state.allRoomsSnapshot = summaries.map {
+                    HomeScreenRoom(summary: $0,
+                                   hideUnreadMessagesBadge: self.appSettings.hideUnreadMessagesBadge,
+                                   seenInvites: seenInvites)
+                }
             }
             .store(in: &cancellables)
     }

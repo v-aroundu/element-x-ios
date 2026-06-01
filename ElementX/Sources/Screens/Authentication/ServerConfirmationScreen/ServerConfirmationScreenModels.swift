@@ -38,14 +38,17 @@ struct ServerConfirmationScreenViewState: BindableState {
     var title: String {
         switch mode {
         case .confirmation(let accountProvider):
+            let displayName = accountProvider == "messenger.aroundu.app"
+                ? InfoPlistReader.main.bundleDisplayName
+                : accountProvider
             switch authenticationFlow {
             case .login:
-                L10n.screenServerConfirmationTitleLogin(accountProvider)
+                return L10n.screenServerConfirmationTitleLogin(displayName)
             case .register:
-                L10n.screenServerConfirmationTitleRegister(accountProvider)
+                return L10n.screenServerConfirmationTitleRegister(displayName)
             }
         case .picker:
-            L10n.screenServerConfirmationTitlePickerMode
+            return L10n.screenServerConfirmationTitlePickerMode
         }
     }
     
@@ -55,7 +58,7 @@ struct ServerConfirmationScreenViewState: BindableState {
 
         return switch authenticationFlow {
         case .login:
-            if homeserverAddress == "matrix.org" {
+            if homeserverAddress == "messenger.aroundu.app" {
                 L10n.screenServerConfirmationMessageLoginMatrixDotOrg
             } else if homeserverAddress == "element.io" {
                 L10n.screenServerConfirmationMessageLoginElementDotIo

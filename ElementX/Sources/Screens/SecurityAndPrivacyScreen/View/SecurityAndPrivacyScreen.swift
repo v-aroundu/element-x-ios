@@ -18,14 +18,16 @@ struct SecurityAndPrivacyScreen: View {
                 roomAccessSection
             }
             
-            if context.desiredSettings.accessType.isAddressRequired, context.viewState.canEditAddress {
-                visibilitySection
-                if let canonicalAlias = context.viewState.canonicalAlias {
-                    addressSection(canonicalAlias: canonicalAlias)
-                } else {
-                    addAddressSection
-                }
-            }
+            // Address field is intentionally hidden — alias is auto-generated from the room name
+            // and sent silently to the backend using the default homeserver (messenger.aroundu.app).
+            // if context.desiredSettings.accessType.isAddressRequired, context.viewState.canEditAddress {
+            //     visibilitySection
+            //     if let canonicalAlias = context.viewState.canonicalAlias {
+            //         addressSection(canonicalAlias: canonicalAlias)
+            //     } else {
+            //         addAddressSection
+            //     }
+            // }
             
             if !context.viewState.isSpace {
                 if context.viewState.canEnableEncryption {

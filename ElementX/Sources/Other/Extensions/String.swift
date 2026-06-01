@@ -136,3 +136,12 @@ extension String {
         return link
     }
 }
+
+extension String {
+    /// For a Matrix user ID like `@alice:messenger.aroundu.app`, returns `@alice`.
+    /// For any other string, returns the original unchanged.
+    var matrixIDLocalpart: String {
+        guard hasPrefix("@"), let colonIndex = firstIndex(of: ":") else { return self }
+        return String(self[startIndex..<colonIndex])
+    }
+}

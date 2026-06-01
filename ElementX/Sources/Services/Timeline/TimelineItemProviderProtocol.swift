@@ -19,7 +19,7 @@ struct TimelinePaginationState: Equatable {
 }
 
 /// Entities implementing this protocol are responsible for processings diffs coming from the rust timeline
-/// and converting them into an array of Element X specific ``TimelineItemProxy``s that will be
+/// and converting them into an array of aroundU Messenger specific ``TimelineItemProxy``s that will be
 /// published as an array together with the pagination state through the ``updatePublisher``.
 @MainActor
 protocol TimelineItemProviderProtocol {

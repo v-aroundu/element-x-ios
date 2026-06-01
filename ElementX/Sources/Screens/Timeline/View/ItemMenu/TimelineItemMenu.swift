@@ -72,7 +72,7 @@ struct TimelineItemMenu: View {
                 Spacer(minLength: 8.0)
                 
                 VStack(alignment: .leading, spacing: 0) {
-                    Text(item.sender.displayName ?? item.sender.id)
+                    Text(item.sender.displayName ?? item.sender.id.matrixIDLocalpart)
                         .font(.compound.bodySMSemibold)
                         .foregroundColor(.compound.textPrimary)
                         .textSelection(.enabled)

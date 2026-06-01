@@ -9,7 +9,7 @@ jobs:
     name: Add labelled issues to X-Plorer project
     runs-on: ubuntu-latest
     if: >
-      contains(github.event.issue.labels.*.name, 'Team: Element X Feature')
+      contains(github.event.issue.labels.*.name, 'Team: aroundU Messenger Feature')
     steps:
       - uses: actions/add-to-project@main
         with:
@@ -31,7 +31,7 @@ jobs:
     name: Add labelled issues to EX project
     runs-on: ubuntu-latest
     if: >
-      contains(github.event.issue.labels.*.name, 'Team: Element X Platform')
+      contains(github.event.issue.labels.*.name, 'Team: aroundU Messenger Platform')
     steps:
       - uses: actions/add-to-project@main
         with:

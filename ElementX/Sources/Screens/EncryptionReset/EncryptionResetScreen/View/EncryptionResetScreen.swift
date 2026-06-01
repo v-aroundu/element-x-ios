@@ -13,6 +13,16 @@ struct EncryptionResetScreen: View {
     @Bindable var context: EncryptionResetScreenViewModel.Context
     
     var body: some View {
+        if context.viewState.oidcApprovalURL != nil {
+            oidcApprovalView
+        } else {
+            resetWarningView
+        }
+    }
+    
+    // MARK: - Reset warning (initial state)
+    
+    private var resetWarningView: some View {
         FullscreenDialog {
             mainContent
         } bottomContent: {
@@ -85,6 +95,45 @@ struct EncryptionResetScreen: View {
                 context.send(viewAction: .cancel)
             }
         }
+    }
+    
+    // MARK: - OIDC approval step
+    
+    private var oidcApprovalView: some View {
+        FullscreenDialog {
+            VStack(spacing: 24) {
+                VStack(spacing: 8) {
+                    BigIcon(icon: \.lockSolid, style: .default)
+                        .padding(.bottom, 8)
+                    Text(L10n.screenEncryptionResetTitle)
+                        .font(.compound.headingMDBold)
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.compound.textPrimary)
+                    Text("To complete the reset, approve it in your account settings.\nTap \"Open Browser\" below, approve, then return here and tap \"Continue\".")
+                        .font(.compound.bodyMD)
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.compound.textSecondary)
+                        .padding(.top, 4)
+                }
+            }
+        } bottomContent: {
+            VStack(spacing: 12) {
+                Button("Open Browser") {
+                    context.send(viewAction: .openOIDCURL)
+                }
+                .buttonStyle(.compound(.secondary))
+                
+                Button(L10n.actionContinue) {
+                    context.send(viewAction: .continueAfterOIDCApproval)
+                }
+                .buttonStyle(.compound(.primary))
+            }
+        }
+        .background()
+        .backgroundStyle(.compound.bgCanvasDefault)
+        .interactiveDismissDisabled()
+        .toolbar { toolbar }
+        .toolbar(.visible, for: .navigationBar)
     }
 }
 

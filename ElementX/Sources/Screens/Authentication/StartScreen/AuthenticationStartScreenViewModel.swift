@@ -100,22 +100,9 @@ class AuthenticationStartScreenViewModel: AuthenticationStartScreenViewModelType
             return
         }
         
-        guard authenticationService.homeserver.value.loginMode.supportsOIDCFlow else {
-            actionsSubject.send(.loginDirectlyWithPassword(loginHint: loginHint))
-            return
-        }
-        
-        guard let window = state.window else {
-            displayError()
-            return
-        }
-        
-        switch await authenticationService.urlForOIDCLogin(loginHint: loginHint) {
-        case .success(let oidcData):
-            actionsSubject.send(.loginDirectlyWithOIDC(data: oidcData, window: window))
-        case .failure:
-            displayError()
-        }
+        // Always use password login to avoid OIDC web authentication session issues
+        // with Associated Domains not being configured for this app bundle.
+        actionsSubject.send(.loginDirectlyWithPassword(loginHint: loginHint))
     }
     
     private let loadingIndicatorID = "\(AuthenticationStartScreenViewModel.self)-Loading"

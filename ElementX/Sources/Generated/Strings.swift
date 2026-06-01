@@ -1366,6 +1366,14 @@ internal enum L10n {
   internal static var screenAppLockSignoutAlertMessage: String { return L10n.tr("Localizable", "screen_app_lock_signout_alert_message") }
   /// You are being signed out
   internal static var screenAppLockSignoutAlertTitle: String { return L10n.tr("Localizable", "screen_app_lock_signout_alert_title") }
+  /// Secure Your App
+  internal static var screenAppLockPromptTitle: String { return L10n.tr("Localizable", "screen_app_lock_prompt_title") }
+  /// Protect your conversations by enabling app lock. Use Face ID, Touch ID, or a PIN to keep your chats private.
+  internal static var screenAppLockPromptSubtitle: String { return L10n.tr("Localizable", "screen_app_lock_prompt_subtitle") }
+  /// Enable App Lock
+  internal static var screenAppLockPromptEnable: String { return L10n.tr("Localizable", "screen_app_lock_prompt_enable") }
+  /// Maybe Later
+  internal static var screenAppLockPromptSkip: String { return L10n.tr("Localizable", "screen_app_lock_prompt_skip") }
   /// Plural format key: "%#@COUNT@"
   internal static func screenAppLockSubtitle(_ p1: Int) -> String {
     return L10n.tr("Localizable", "screen_app_lock_subtitle", p1)
@@ -2832,7 +2840,7 @@ internal enum L10n {
   }
   /// This is the beginning of this conversation.
   internal static var screenRoomTimelineBeginningOfRoomNoName: String { return L10n.tr("Localizable", "screen_room_timeline_beginning_of_room_no_name") }
-  /// Unsupported call. Ask if the caller can use the new Element X app.
+  /// Unsupported call. Ask if the caller can use the new aroundU Messenger app.
   internal static var screenRoomTimelineLegacyCall: String { return L10n.tr("Localizable", "screen_room_timeline_legacy_call") }
   /// Show less
   internal static var screenRoomTimelineLessReactions: String { return L10n.tr("Localizable", "screen_room_timeline_less_reactions") }
@@ -3209,6 +3217,8 @@ internal enum L10n {
   internal static var screenSpaceAnnouncementTitle: String { return L10n.tr("Localizable", "screen_space_announcement_title") }
   /// Add your first room
   internal static var screenSpaceEmptyStateTitle: String { return L10n.tr("Localizable", "screen_space_empty_state_title") }
+  /// No rooms created yet
+  internal static var screenSpaceNoRoomsTitle: String { return L10n.tr("Localizable", "screen_space_no_rooms_title") }
   /// Spaces you have created or joined.
   internal static var screenSpaceListDescription: String { return L10n.tr("Localizable", "screen_space_list_description") }
   /// %1$@ • %2$@
