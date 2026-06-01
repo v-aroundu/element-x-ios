@@ -15,8 +15,10 @@ struct AppLockScreenCoordinatorParameters {
 }
 
 enum AppLockScreenCoordinatorAction {
-    /// The user has successfully unlocked the app.
+    /// The user successfully unlocked the app with the real PIN.
     case appUnlocked
+    /// The user successfully unlocked with the dummy (duress) PIN.
+    case appUnlockedWithDummyPIN
     /// The user failed to unlock the app (or forgot their PIN).
     case forceLogout
 }
@@ -42,6 +44,8 @@ final class AppLockScreenCoordinator: CoordinatorProtocol {
             switch action {
             case .appUnlocked:
                 self.actionsSubject.send(.appUnlocked)
+            case .appUnlockedWithDummyPIN:
+                self.actionsSubject.send(.appUnlockedWithDummyPIN)
             case .forceLogout:
                 self.actionsSubject.send(.forceLogout)
             }

@@ -7,16 +7,13 @@
 //
 
 import Combine
-import LocalAuthentication
 
 /// The service responsible for locking and unlocking the app.
 class AppLockService: AppLockServiceProtocol {
     private let keychainController: KeychainControllerProtocol
     private let appSettings: AppSettings
-    private let context: LAContext
     
     private let timer: AppLockTimer
-    private let unlockPolicy: LAPolicy = .deviceOwnerAuthenticationWithBiometrics
     
     var isMandatory: Bool {
         appSettings.appLockIsMandatory
@@ -37,38 +34,28 @@ class AppLockService: AppLockServiceProtocol {
         isEnabledSubject.eraseToAnyPublisher()
     }
     
-    var biometryType: LABiometryType {
-        updateBiometrics()
-        guard context.evaluatedPolicyDomainState != nil else { return .none }
-        return context.biometryType
-    }
-    
-    var biometricUnlockEnabled: Bool {
-        keychainController.containsPINCodeBiometricState()
-    }
-    
-    var biometricUnlockTrusted: Bool {
-        guard let state = keychainController.pinCodeBiometricState() else { return false }
-        updateBiometrics()
-        return state == context.evaluatedPolicyDomainState
+    var isDummyPINEnabled: Bool {
+        keychainController.containsDummyPINCode()
     }
     
     var numberOfPINAttempts: AnyPublisher<Int, Never> {
         appSettings.$appLockNumberOfPINAttempts
     }
     
-    init(keychainController: KeychainControllerProtocol, appSettings: AppSettings, context: LAContext = .init()) {
+    init(keychainController: KeychainControllerProtocol, appSettings: AppSettings) {
         self.keychainController = keychainController
         self.appSettings = appSettings
-        self.context = context
         timer = AppLockTimer(gracePeriod: appSettings.appLockGracePeriod)
-        
-        updateBiometrics()
     }
     
     func setupPINCode(_ pinCode: String) -> Result<Void, AppLockServiceError> {
         let result = validate(pinCode)
         guard case .success = result else { return result }
+        
+        // Ensure real PIN doesn't match existing dummy PIN
+        if let dummyPIN = keychainController.dummyPINCode(), dummyPIN == pinCode {
+            return .failure(.dummyPINMatchesRealPIN)
+        }
         
         do {
             try keychainController.setPINCode(pinCode)
@@ -86,12 +73,17 @@ class AppLockService: AppLockServiceProtocol {
         return .success(())
     }
     
-    func enableBiometricUnlock() -> Result<Void, AppLockServiceError> {
-        guard isEnabled else { return .failure(.pinNotSet) }
-        guard let state = context.evaluatedPolicyDomainState else { return .failure(.biometricUnlockNotSupported) }
+    func setupDummyPINCode(_ pinCode: String) -> Result<Void, AppLockServiceError> {
+        let result = validate(pinCode)
+        guard case .success = result else { return result }
+        
+        // Dummy PIN must differ from the real PIN
+        if let realPIN = keychainController.pinCode(), realPIN == pinCode {
+            return .failure(.dummyPINMatchesRealPIN)
+        }
         
         do {
-            try keychainController.setPINCodeBiometricState(state)
+            try keychainController.setDummyPINCode(pinCode)
             return .success(())
         } catch {
             MXLog.error("Keychain access error: \(error)")
@@ -99,13 +91,13 @@ class AppLockService: AppLockServiceProtocol {
         }
     }
     
-    func disableBiometricUnlock() {
-        keychainController.removePINCodeBiometricState()
+    func removeDummyPINCode() {
+        keychainController.removeDummyPINCode()
     }
     
     func disable() {
         keychainController.removePINCode()
-        keychainController.removePINCodeBiometricState()
+        keychainController.removeDummyPINCode()
         appSettings.appLockNumberOfPINAttempts = 0
         isEnabledSubject.send(false)
     }
@@ -118,76 +110,25 @@ class AppLockService: AppLockServiceProtocol {
         timer.computeLockState(didBecomeActiveAt: date)
     }
     
-    func unlock(with pinCode: String) -> Bool {
-        guard pinCode == keychainController.pinCode() else {
-            MXLog.warning("Wrong PIN entered.")
-            appSettings.appLockNumberOfPINAttempts += 1
-            return false
-        }
-        
-        if biometricUnlockEnabled, !biometricUnlockTrusted {
-            MXLog.info("Fixing trust for biometric unlock.")
-            updateBiometrics()
-            _ = enableBiometricUnlock()
-        }
-        
-        completeUnlock()
-        return true
-    }
-    
-    func unlockWithBiometrics() async -> AppLockServiceBiometricResult {
-        guard biometryType != .none, biometricUnlockEnabled else {
-            MXLog.error("Biometric unlock not setup.")
-            return .failed
-        }
-        
-        guard biometricUnlockTrusted else {
-            MXLog.error("Biometrics have changed. PIN should be shown.")
-            return .failed
-        }
-        
-        do {
-            let context = unlockContext()
-            guard try await context.evaluatePolicy(unlockPolicy, localizedReason: L10n.screenAppLockBiometricUnlockReasonIos) else {
-                MXLog.warning("\(context.biometryType) failed without error.")
-                return .failed
-            }
+    func unlock(with pinCode: String) -> AppLockPINUnlockResult {
+        if pinCode == keychainController.pinCode() {
             completeUnlock()
-            return .unlocked
-        } catch LAError.systemCancel {
-            MXLog.error("\(context.biometryType) failed: The system cancelled.")
-            return .interrupted
-        } catch {
-            MXLog.error("\(context.biometryType) failed: \(error)")
-            return .failed
+            return .unlockedReal
         }
+        
+        if keychainController.containsDummyPINCode(), pinCode == keychainController.dummyPINCode() {
+            // Don't reset attempts or touch the timer so that the real session stays locked.
+            return .unlockedDummy
+        }
+        
+        MXLog.warning("Wrong PIN entered.")
+        appSettings.appLockNumberOfPINAttempts += 1
+        return .failed
     }
     
     // MARK: - Private
     
-    /// Queries the context for supported biometrics and enrolment state.
-    private func updateBiometrics() {
-        var error: NSError?
-        context.canEvaluatePolicy(unlockPolicy, error: &error)
-        
-        if let error {
-            MXLog.error("Biometrics error: \(error)")
-        }
-    }
-    
-    /// Creates a context specifically for unlocking the app. The titles are customised,
-    /// and the fresh context ensures that the user is promoted to unlock based on
-    /// `timer.gracePeriod` rather than any system to defined grace period.
-    private func unlockContext() -> LAContext {
-        // Keep using the injected context for tests etc.
-        guard type(of: context) == LAContext.self else { return context }
-        
-        let context = LAContext()
-        context.localizedFallbackTitle = L10n.actionEnterPin
-        return context
-    }
-    
-    /// Shared logic for completing an unlock via a PIN or biometrics.
+    /// Shared logic for completing an unlock via the real PIN.
     private func completeUnlock() {
         timer.registerUnlock()
         appSettings.appLockNumberOfPINAttempts = 0

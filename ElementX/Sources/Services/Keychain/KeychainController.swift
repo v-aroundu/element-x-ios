@@ -32,6 +32,7 @@ final class KeychainController: KeychainControllerProtocol {
     private enum Key: String {
         case appLockPINCode
         case appLockBiometricState
+        case appLockDummyPINCode
     }
 
     init(service: KeychainControllerService, accessGroup: String) {
@@ -185,6 +186,38 @@ final class KeychainController: KeychainControllerProtocol {
             try mainKeychain.remove(Key.appLockBiometricState.rawValue)
         } catch {
             MXLog.error("Failed removing the PIN code biometric state.")
+        }
+    }
+    
+    // MARK: - Dummy PIN (Duress Mode)
+    
+    func containsDummyPINCode() -> Bool {
+        do {
+            return try mainKeychain.contains(Key.appLockDummyPINCode.rawValue)
+        } catch {
+            MXLog.error("Failed checking for dummy PIN code.")
+            return false
+        }
+    }
+    
+    func setDummyPINCode(_ pinCode: String) throws {
+        try mainKeychain.set(pinCode, key: Key.appLockDummyPINCode.rawValue)
+    }
+    
+    func dummyPINCode() -> String? {
+        do {
+            return try mainKeychain.getString(Key.appLockDummyPINCode.rawValue)
+        } catch {
+            MXLog.error("Failed retrieving the dummy PIN code.")
+            return nil
+        }
+    }
+    
+    func removeDummyPINCode() {
+        do {
+            try mainKeychain.remove(Key.appLockDummyPINCode.rawValue)
+        } catch {
+            MXLog.error("Failed removing the dummy PIN code.")
         }
     }
 }

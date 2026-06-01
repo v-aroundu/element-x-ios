@@ -41,4 +41,15 @@ protocol KeychainControllerProtocol: ClientSessionDelegate {
     func pinCodeBiometricState() -> Data?
     /// Removes the App Lock PIN code biometric state.
     func removePINCodeBiometricState()
+    
+    // MARK: Dummy PIN (Duress Mode)
+    
+    /// Whether or not a dummy (duress) PIN code has been set.
+    func containsDummyPINCode() -> Bool
+    /// Sets the dummy (duress) PIN code.
+    func setDummyPINCode(_ pinCode: String) throws
+    /// The dummy PIN code that opens the decoy session.
+    func dummyPINCode() -> String?
+    /// Removes the dummy PIN code.
+    func removeDummyPINCode()
 }

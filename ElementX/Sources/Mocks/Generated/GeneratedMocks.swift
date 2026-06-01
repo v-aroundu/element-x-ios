@@ -272,21 +272,11 @@ class AppLockServiceMock: AppLockServiceProtocol, @unchecked Sendable {
         set(value) { underlyingIsEnabledPublisher = value }
     }
     var underlyingIsEnabledPublisher: AnyPublisher<Bool, Never>!
-    var biometryType: LABiometryType {
-        get { return underlyingBiometryType }
-        set(value) { underlyingBiometryType = value }
+    var isDummyPINEnabled: Bool {
+        get { return underlyingIsDummyPINEnabled }
+        set(value) { underlyingIsDummyPINEnabled = value }
     }
-    var underlyingBiometryType: LABiometryType!
-    var biometricUnlockEnabled: Bool {
-        get { return underlyingBiometricUnlockEnabled }
-        set(value) { underlyingBiometricUnlockEnabled = value }
-    }
-    var underlyingBiometricUnlockEnabled: Bool!
-    var biometricUnlockTrusted: Bool {
-        get { return underlyingBiometricUnlockTrusted }
-        set(value) { underlyingBiometricUnlockTrusted = value }
-    }
-    var underlyingBiometricUnlockTrusted: Bool!
+    var underlyingIsDummyPINEnabled: Bool!
     var numberOfPINAttempts: AnyPublisher<Int, Never> {
         get { return underlyingNumberOfPINAttempts }
         set(value) { underlyingNumberOfPINAttempts = value }
@@ -302,10 +292,7 @@ class AppLockServiceMock: AppLockServiceProtocol, @unchecked Sendable {
                 return setupPINCodeUnderlyingCallsCount
             } else {
                 var returnValue: Int? = nil
-                DispatchQueue.main.sync {
-                    returnValue = setupPINCodeUnderlyingCallsCount
-                }
-
+                DispatchQueue.main.sync { returnValue = setupPINCodeUnderlyingCallsCount }
                 return returnValue!
             }
         }
@@ -313,40 +300,24 @@ class AppLockServiceMock: AppLockServiceProtocol, @unchecked Sendable {
             if Thread.isMainThread {
                 setupPINCodeUnderlyingCallsCount = newValue
             } else {
-                DispatchQueue.main.sync {
-                    setupPINCodeUnderlyingCallsCount = newValue
-                }
+                DispatchQueue.main.sync { setupPINCodeUnderlyingCallsCount = newValue }
             }
         }
     }
-    var setupPINCodeCalled: Bool {
-        return setupPINCodeCallsCount > 0
-    }
+    var setupPINCodeCalled: Bool { return setupPINCodeCallsCount > 0 }
     var setupPINCodeReceivedPinCode: String?
     var setupPINCodeReceivedInvocations: [String] = []
-
     var setupPINCodeUnderlyingReturnValue: Result<Void, AppLockServiceError>!
     var setupPINCodeReturnValue: Result<Void, AppLockServiceError>! {
         get {
-            if Thread.isMainThread {
-                return setupPINCodeUnderlyingReturnValue
-            } else {
-                var returnValue: Result<Void, AppLockServiceError>? = nil
-                DispatchQueue.main.sync {
-                    returnValue = setupPINCodeUnderlyingReturnValue
-                }
-
-                return returnValue!
-            }
+            if Thread.isMainThread { return setupPINCodeUnderlyingReturnValue }
+            var returnValue: Result<Void, AppLockServiceError>? = nil
+            DispatchQueue.main.sync { returnValue = setupPINCodeUnderlyingReturnValue }
+            return returnValue!
         }
         set {
-            if Thread.isMainThread {
-                setupPINCodeUnderlyingReturnValue = newValue
-            } else {
-                DispatchQueue.main.sync {
-                    setupPINCodeUnderlyingReturnValue = newValue
-                }
-            }
+            if Thread.isMainThread { setupPINCodeUnderlyingReturnValue = newValue }
+            else { DispatchQueue.main.sync { setupPINCodeUnderlyingReturnValue = newValue } }
         }
     }
     var setupPINCodeClosure: ((String) -> Result<Void, AppLockServiceError>)?
@@ -354,69 +325,43 @@ class AppLockServiceMock: AppLockServiceProtocol, @unchecked Sendable {
     func setupPINCode(_ pinCode: String) -> Result<Void, AppLockServiceError> {
         setupPINCodeCallsCount += 1
         setupPINCodeReceivedPinCode = pinCode
-        DispatchQueue.main.async {
-            self.setupPINCodeReceivedInvocations.append(pinCode)
-        }
+        DispatchQueue.main.async { self.setupPINCodeReceivedInvocations.append(pinCode) }
         if let setupPINCodeClosure = setupPINCodeClosure {
             return setupPINCodeClosure(pinCode)
         } else {
             return setupPINCodeReturnValue
         }
     }
+
     //MARK: - validate
 
     var validateUnderlyingCallsCount = 0
     var validateCallsCount: Int {
         get {
-            if Thread.isMainThread {
-                return validateUnderlyingCallsCount
-            } else {
-                var returnValue: Int? = nil
-                DispatchQueue.main.sync {
-                    returnValue = validateUnderlyingCallsCount
-                }
-
-                return returnValue!
-            }
+            if Thread.isMainThread { return validateUnderlyingCallsCount }
+            var returnValue: Int? = nil
+            DispatchQueue.main.sync { returnValue = validateUnderlyingCallsCount }
+            return returnValue!
         }
         set {
-            if Thread.isMainThread {
-                validateUnderlyingCallsCount = newValue
-            } else {
-                DispatchQueue.main.sync {
-                    validateUnderlyingCallsCount = newValue
-                }
-            }
+            if Thread.isMainThread { validateUnderlyingCallsCount = newValue }
+            else { DispatchQueue.main.sync { validateUnderlyingCallsCount = newValue } }
         }
     }
-    var validateCalled: Bool {
-        return validateCallsCount > 0
-    }
+    var validateCalled: Bool { return validateCallsCount > 0 }
     var validateReceivedPinCode: String?
     var validateReceivedInvocations: [String] = []
-
     var validateUnderlyingReturnValue: Result<Void, AppLockServiceError>!
     var validateReturnValue: Result<Void, AppLockServiceError>! {
         get {
-            if Thread.isMainThread {
-                return validateUnderlyingReturnValue
-            } else {
-                var returnValue: Result<Void, AppLockServiceError>? = nil
-                DispatchQueue.main.sync {
-                    returnValue = validateUnderlyingReturnValue
-                }
-
-                return returnValue!
-            }
+            if Thread.isMainThread { return validateUnderlyingReturnValue }
+            var returnValue: Result<Void, AppLockServiceError>? = nil
+            DispatchQueue.main.sync { returnValue = validateUnderlyingReturnValue }
+            return returnValue!
         }
         set {
-            if Thread.isMainThread {
-                validateUnderlyingReturnValue = newValue
-            } else {
-                DispatchQueue.main.sync {
-                    validateUnderlyingReturnValue = newValue
-                }
-            }
+            if Thread.isMainThread { validateUnderlyingReturnValue = newValue }
+            else { DispatchQueue.main.sync { validateUnderlyingReturnValue = newValue } }
         }
     }
     var validateClosure: ((String) -> Result<Void, AppLockServiceError>)?
@@ -424,238 +369,156 @@ class AppLockServiceMock: AppLockServiceProtocol, @unchecked Sendable {
     func validate(_ pinCode: String) -> Result<Void, AppLockServiceError> {
         validateCallsCount += 1
         validateReceivedPinCode = pinCode
-        DispatchQueue.main.async {
-            self.validateReceivedInvocations.append(pinCode)
-        }
+        DispatchQueue.main.async { self.validateReceivedInvocations.append(pinCode) }
         if let validateClosure = validateClosure {
             return validateClosure(pinCode)
         } else {
             return validateReturnValue
         }
     }
-    //MARK: - enableBiometricUnlock
 
-    var enableBiometricUnlockUnderlyingCallsCount = 0
-    var enableBiometricUnlockCallsCount: Int {
-        get {
-            if Thread.isMainThread {
-                return enableBiometricUnlockUnderlyingCallsCount
-            } else {
-                var returnValue: Int? = nil
-                DispatchQueue.main.sync {
-                    returnValue = enableBiometricUnlockUnderlyingCallsCount
-                }
-
-                return returnValue!
-            }
-        }
-        set {
-            if Thread.isMainThread {
-                enableBiometricUnlockUnderlyingCallsCount = newValue
-            } else {
-                DispatchQueue.main.sync {
-                    enableBiometricUnlockUnderlyingCallsCount = newValue
-                }
-            }
-        }
-    }
-    var enableBiometricUnlockCalled: Bool {
-        return enableBiometricUnlockCallsCount > 0
-    }
-
-    var enableBiometricUnlockUnderlyingReturnValue: Result<Void, AppLockServiceError>!
-    var enableBiometricUnlockReturnValue: Result<Void, AppLockServiceError>! {
-        get {
-            if Thread.isMainThread {
-                return enableBiometricUnlockUnderlyingReturnValue
-            } else {
-                var returnValue: Result<Void, AppLockServiceError>? = nil
-                DispatchQueue.main.sync {
-                    returnValue = enableBiometricUnlockUnderlyingReturnValue
-                }
-
-                return returnValue!
-            }
-        }
-        set {
-            if Thread.isMainThread {
-                enableBiometricUnlockUnderlyingReturnValue = newValue
-            } else {
-                DispatchQueue.main.sync {
-                    enableBiometricUnlockUnderlyingReturnValue = newValue
-                }
-            }
-        }
-    }
-    var enableBiometricUnlockClosure: (() -> Result<Void, AppLockServiceError>)?
-
-    func enableBiometricUnlock() -> Result<Void, AppLockServiceError> {
-        enableBiometricUnlockCallsCount += 1
-        if let enableBiometricUnlockClosure = enableBiometricUnlockClosure {
-            return enableBiometricUnlockClosure()
-        } else {
-            return enableBiometricUnlockReturnValue
-        }
-    }
-    //MARK: - disableBiometricUnlock
-
-    var disableBiometricUnlockUnderlyingCallsCount = 0
-    var disableBiometricUnlockCallsCount: Int {
-        get {
-            if Thread.isMainThread {
-                return disableBiometricUnlockUnderlyingCallsCount
-            } else {
-                var returnValue: Int? = nil
-                DispatchQueue.main.sync {
-                    returnValue = disableBiometricUnlockUnderlyingCallsCount
-                }
-
-                return returnValue!
-            }
-        }
-        set {
-            if Thread.isMainThread {
-                disableBiometricUnlockUnderlyingCallsCount = newValue
-            } else {
-                DispatchQueue.main.sync {
-                    disableBiometricUnlockUnderlyingCallsCount = newValue
-                }
-            }
-        }
-    }
-    var disableBiometricUnlockCalled: Bool {
-        return disableBiometricUnlockCallsCount > 0
-    }
-    var disableBiometricUnlockClosure: (() -> Void)?
-
-    func disableBiometricUnlock() {
-        disableBiometricUnlockCallsCount += 1
-        disableBiometricUnlockClosure?()
-    }
     //MARK: - disable
 
     var disableUnderlyingCallsCount = 0
     var disableCallsCount: Int {
         get {
-            if Thread.isMainThread {
-                return disableUnderlyingCallsCount
-            } else {
-                var returnValue: Int? = nil
-                DispatchQueue.main.sync {
-                    returnValue = disableUnderlyingCallsCount
-                }
-
-                return returnValue!
-            }
+            if Thread.isMainThread { return disableUnderlyingCallsCount }
+            var returnValue: Int? = nil
+            DispatchQueue.main.sync { returnValue = disableUnderlyingCallsCount }
+            return returnValue!
         }
         set {
-            if Thread.isMainThread {
-                disableUnderlyingCallsCount = newValue
-            } else {
-                DispatchQueue.main.sync {
-                    disableUnderlyingCallsCount = newValue
-                }
-            }
+            if Thread.isMainThread { disableUnderlyingCallsCount = newValue }
+            else { DispatchQueue.main.sync { disableUnderlyingCallsCount = newValue } }
         }
     }
-    var disableCalled: Bool {
-        return disableCallsCount > 0
-    }
+    var disableCalled: Bool { return disableCallsCount > 0 }
     var disableClosure: (() -> Void)?
 
     func disable() {
         disableCallsCount += 1
         disableClosure?()
     }
+
+    //MARK: - setupDummyPINCode
+
+    var setupDummyPINCodeUnderlyingCallsCount = 0
+    var setupDummyPINCodeCallsCount: Int {
+        get {
+            if Thread.isMainThread { return setupDummyPINCodeUnderlyingCallsCount }
+            var returnValue: Int? = nil
+            DispatchQueue.main.sync { returnValue = setupDummyPINCodeUnderlyingCallsCount }
+            return returnValue!
+        }
+        set {
+            if Thread.isMainThread { setupDummyPINCodeUnderlyingCallsCount = newValue }
+            else { DispatchQueue.main.sync { setupDummyPINCodeUnderlyingCallsCount = newValue } }
+        }
+    }
+    var setupDummyPINCodeCalled: Bool { return setupDummyPINCodeCallsCount > 0 }
+    var setupDummyPINCodeReceivedPinCode: String?
+    var setupDummyPINCodeReceivedInvocations: [String] = []
+    var setupDummyPINCodeUnderlyingReturnValue: Result<Void, AppLockServiceError>!
+    var setupDummyPINCodeReturnValue: Result<Void, AppLockServiceError>! {
+        get {
+            if Thread.isMainThread { return setupDummyPINCodeUnderlyingReturnValue }
+            var returnValue: Result<Void, AppLockServiceError>? = nil
+            DispatchQueue.main.sync { returnValue = setupDummyPINCodeUnderlyingReturnValue }
+            return returnValue!
+        }
+        set {
+            if Thread.isMainThread { setupDummyPINCodeUnderlyingReturnValue = newValue }
+            else { DispatchQueue.main.sync { setupDummyPINCodeUnderlyingReturnValue = newValue } }
+        }
+    }
+    var setupDummyPINCodeClosure: ((String) -> Result<Void, AppLockServiceError>)?
+
+    func setupDummyPINCode(_ pinCode: String) -> Result<Void, AppLockServiceError> {
+        setupDummyPINCodeCallsCount += 1
+        setupDummyPINCodeReceivedPinCode = pinCode
+        DispatchQueue.main.async { self.setupDummyPINCodeReceivedInvocations.append(pinCode) }
+        if let setupDummyPINCodeClosure = setupDummyPINCodeClosure {
+            return setupDummyPINCodeClosure(pinCode)
+        } else {
+            return setupDummyPINCodeReturnValue
+        }
+    }
+
+    //MARK: - removeDummyPINCode
+
+    var removeDummyPINCodeUnderlyingCallsCount = 0
+    var removeDummyPINCodeCallsCount: Int {
+        get {
+            if Thread.isMainThread { return removeDummyPINCodeUnderlyingCallsCount }
+            var returnValue: Int? = nil
+            DispatchQueue.main.sync { returnValue = removeDummyPINCodeUnderlyingCallsCount }
+            return returnValue!
+        }
+        set {
+            if Thread.isMainThread { removeDummyPINCodeUnderlyingCallsCount = newValue }
+            else { DispatchQueue.main.sync { removeDummyPINCodeUnderlyingCallsCount = newValue } }
+        }
+    }
+    var removeDummyPINCodeCalled: Bool { return removeDummyPINCodeCallsCount > 0 }
+    var removeDummyPINCodeClosure: (() -> Void)?
+
+    func removeDummyPINCode() {
+        removeDummyPINCodeCallsCount += 1
+        removeDummyPINCodeClosure?()
+    }
+
     //MARK: - applicationDidEnterBackground
 
     var applicationDidEnterBackgroundUnderlyingCallsCount = 0
     var applicationDidEnterBackgroundCallsCount: Int {
         get {
-            if Thread.isMainThread {
-                return applicationDidEnterBackgroundUnderlyingCallsCount
-            } else {
-                var returnValue: Int? = nil
-                DispatchQueue.main.sync {
-                    returnValue = applicationDidEnterBackgroundUnderlyingCallsCount
-                }
-
-                return returnValue!
-            }
+            if Thread.isMainThread { return applicationDidEnterBackgroundUnderlyingCallsCount }
+            var returnValue: Int? = nil
+            DispatchQueue.main.sync { returnValue = applicationDidEnterBackgroundUnderlyingCallsCount }
+            return returnValue!
         }
         set {
-            if Thread.isMainThread {
-                applicationDidEnterBackgroundUnderlyingCallsCount = newValue
-            } else {
-                DispatchQueue.main.sync {
-                    applicationDidEnterBackgroundUnderlyingCallsCount = newValue
-                }
-            }
+            if Thread.isMainThread { applicationDidEnterBackgroundUnderlyingCallsCount = newValue }
+            else { DispatchQueue.main.sync { applicationDidEnterBackgroundUnderlyingCallsCount = newValue } }
         }
     }
-    var applicationDidEnterBackgroundCalled: Bool {
-        return applicationDidEnterBackgroundCallsCount > 0
-    }
+    var applicationDidEnterBackgroundCalled: Bool { return applicationDidEnterBackgroundCallsCount > 0 }
     var applicationDidEnterBackgroundClosure: (() -> Void)?
 
     func applicationDidEnterBackground() {
         applicationDidEnterBackgroundCallsCount += 1
         applicationDidEnterBackgroundClosure?()
     }
+
     //MARK: - computeNeedsUnlock
 
     var computeNeedsUnlockDidBecomeActiveAtUnderlyingCallsCount = 0
     var computeNeedsUnlockDidBecomeActiveAtCallsCount: Int {
         get {
-            if Thread.isMainThread {
-                return computeNeedsUnlockDidBecomeActiveAtUnderlyingCallsCount
-            } else {
-                var returnValue: Int? = nil
-                DispatchQueue.main.sync {
-                    returnValue = computeNeedsUnlockDidBecomeActiveAtUnderlyingCallsCount
-                }
-
-                return returnValue!
-            }
+            if Thread.isMainThread { return computeNeedsUnlockDidBecomeActiveAtUnderlyingCallsCount }
+            var returnValue: Int? = nil
+            DispatchQueue.main.sync { returnValue = computeNeedsUnlockDidBecomeActiveAtUnderlyingCallsCount }
+            return returnValue!
         }
         set {
-            if Thread.isMainThread {
-                computeNeedsUnlockDidBecomeActiveAtUnderlyingCallsCount = newValue
-            } else {
-                DispatchQueue.main.sync {
-                    computeNeedsUnlockDidBecomeActiveAtUnderlyingCallsCount = newValue
-                }
-            }
+            if Thread.isMainThread { computeNeedsUnlockDidBecomeActiveAtUnderlyingCallsCount = newValue }
+            else { DispatchQueue.main.sync { computeNeedsUnlockDidBecomeActiveAtUnderlyingCallsCount = newValue } }
         }
     }
-    var computeNeedsUnlockDidBecomeActiveAtCalled: Bool {
-        return computeNeedsUnlockDidBecomeActiveAtCallsCount > 0
-    }
+    var computeNeedsUnlockDidBecomeActiveAtCalled: Bool { return computeNeedsUnlockDidBecomeActiveAtCallsCount > 0 }
     var computeNeedsUnlockDidBecomeActiveAtReceivedDate: Date?
     var computeNeedsUnlockDidBecomeActiveAtReceivedInvocations: [Date] = []
-
     var computeNeedsUnlockDidBecomeActiveAtUnderlyingReturnValue: Bool!
     var computeNeedsUnlockDidBecomeActiveAtReturnValue: Bool! {
         get {
-            if Thread.isMainThread {
-                return computeNeedsUnlockDidBecomeActiveAtUnderlyingReturnValue
-            } else {
-                var returnValue: Bool? = nil
-                DispatchQueue.main.sync {
-                    returnValue = computeNeedsUnlockDidBecomeActiveAtUnderlyingReturnValue
-                }
-
-                return returnValue!
-            }
+            if Thread.isMainThread { return computeNeedsUnlockDidBecomeActiveAtUnderlyingReturnValue }
+            var returnValue: Bool? = nil
+            DispatchQueue.main.sync { returnValue = computeNeedsUnlockDidBecomeActiveAtUnderlyingReturnValue }
+            return returnValue!
         }
         set {
-            if Thread.isMainThread {
-                computeNeedsUnlockDidBecomeActiveAtUnderlyingReturnValue = newValue
-            } else {
-                DispatchQueue.main.sync {
-                    computeNeedsUnlockDidBecomeActiveAtUnderlyingReturnValue = newValue
-                }
-            }
+            if Thread.isMainThread { computeNeedsUnlockDidBecomeActiveAtUnderlyingReturnValue = newValue }
+            else { DispatchQueue.main.sync { computeNeedsUnlockDidBecomeActiveAtUnderlyingReturnValue = newValue } }
         }
     }
     var computeNeedsUnlockDidBecomeActiveAtClosure: ((Date) -> Bool)?
@@ -663,147 +526,55 @@ class AppLockServiceMock: AppLockServiceProtocol, @unchecked Sendable {
     func computeNeedsUnlock(didBecomeActiveAt date: Date) -> Bool {
         computeNeedsUnlockDidBecomeActiveAtCallsCount += 1
         computeNeedsUnlockDidBecomeActiveAtReceivedDate = date
-        DispatchQueue.main.async {
-            self.computeNeedsUnlockDidBecomeActiveAtReceivedInvocations.append(date)
-        }
+        DispatchQueue.main.async { self.computeNeedsUnlockDidBecomeActiveAtReceivedInvocations.append(date) }
         if let computeNeedsUnlockDidBecomeActiveAtClosure = computeNeedsUnlockDidBecomeActiveAtClosure {
             return computeNeedsUnlockDidBecomeActiveAtClosure(date)
         } else {
             return computeNeedsUnlockDidBecomeActiveAtReturnValue
         }
     }
+
     //MARK: - unlock
 
     var unlockWithUnderlyingCallsCount = 0
     var unlockWithCallsCount: Int {
         get {
-            if Thread.isMainThread {
-                return unlockWithUnderlyingCallsCount
-            } else {
-                var returnValue: Int? = nil
-                DispatchQueue.main.sync {
-                    returnValue = unlockWithUnderlyingCallsCount
-                }
-
-                return returnValue!
-            }
+            if Thread.isMainThread { return unlockWithUnderlyingCallsCount }
+            var returnValue: Int? = nil
+            DispatchQueue.main.sync { returnValue = unlockWithUnderlyingCallsCount }
+            return returnValue!
         }
         set {
-            if Thread.isMainThread {
-                unlockWithUnderlyingCallsCount = newValue
-            } else {
-                DispatchQueue.main.sync {
-                    unlockWithUnderlyingCallsCount = newValue
-                }
-            }
+            if Thread.isMainThread { unlockWithUnderlyingCallsCount = newValue }
+            else { DispatchQueue.main.sync { unlockWithUnderlyingCallsCount = newValue } }
         }
     }
-    var unlockWithCalled: Bool {
-        return unlockWithCallsCount > 0
-    }
+    var unlockWithCalled: Bool { return unlockWithCallsCount > 0 }
     var unlockWithReceivedPinCode: String?
     var unlockWithReceivedInvocations: [String] = []
-
-    var unlockWithUnderlyingReturnValue: Bool!
-    var unlockWithReturnValue: Bool! {
+    var unlockWithUnderlyingReturnValue: AppLockPINUnlockResult!
+    var unlockWithReturnValue: AppLockPINUnlockResult! {
         get {
-            if Thread.isMainThread {
-                return unlockWithUnderlyingReturnValue
-            } else {
-                var returnValue: Bool? = nil
-                DispatchQueue.main.sync {
-                    returnValue = unlockWithUnderlyingReturnValue
-                }
-
-                return returnValue!
-            }
+            if Thread.isMainThread { return unlockWithUnderlyingReturnValue }
+            var returnValue: AppLockPINUnlockResult? = nil
+            DispatchQueue.main.sync { returnValue = unlockWithUnderlyingReturnValue }
+            return returnValue!
         }
         set {
-            if Thread.isMainThread {
-                unlockWithUnderlyingReturnValue = newValue
-            } else {
-                DispatchQueue.main.sync {
-                    unlockWithUnderlyingReturnValue = newValue
-                }
-            }
+            if Thread.isMainThread { unlockWithUnderlyingReturnValue = newValue }
+            else { DispatchQueue.main.sync { unlockWithUnderlyingReturnValue = newValue } }
         }
     }
-    var unlockWithClosure: ((String) -> Bool)?
+    var unlockWithClosure: ((String) -> AppLockPINUnlockResult)?
 
-    func unlock(with pinCode: String) -> Bool {
+    func unlock(with pinCode: String) -> AppLockPINUnlockResult {
         unlockWithCallsCount += 1
         unlockWithReceivedPinCode = pinCode
-        DispatchQueue.main.async {
-            self.unlockWithReceivedInvocations.append(pinCode)
-        }
+        DispatchQueue.main.async { self.unlockWithReceivedInvocations.append(pinCode) }
         if let unlockWithClosure = unlockWithClosure {
             return unlockWithClosure(pinCode)
         } else {
             return unlockWithReturnValue
-        }
-    }
-    //MARK: - unlockWithBiometrics
-
-    var unlockWithBiometricsUnderlyingCallsCount = 0
-    var unlockWithBiometricsCallsCount: Int {
-        get {
-            if Thread.isMainThread {
-                return unlockWithBiometricsUnderlyingCallsCount
-            } else {
-                var returnValue: Int? = nil
-                DispatchQueue.main.sync {
-                    returnValue = unlockWithBiometricsUnderlyingCallsCount
-                }
-
-                return returnValue!
-            }
-        }
-        set {
-            if Thread.isMainThread {
-                unlockWithBiometricsUnderlyingCallsCount = newValue
-            } else {
-                DispatchQueue.main.sync {
-                    unlockWithBiometricsUnderlyingCallsCount = newValue
-                }
-            }
-        }
-    }
-    var unlockWithBiometricsCalled: Bool {
-        return unlockWithBiometricsCallsCount > 0
-    }
-
-    var unlockWithBiometricsUnderlyingReturnValue: AppLockServiceBiometricResult!
-    var unlockWithBiometricsReturnValue: AppLockServiceBiometricResult! {
-        get {
-            if Thread.isMainThread {
-                return unlockWithBiometricsUnderlyingReturnValue
-            } else {
-                var returnValue: AppLockServiceBiometricResult? = nil
-                DispatchQueue.main.sync {
-                    returnValue = unlockWithBiometricsUnderlyingReturnValue
-                }
-
-                return returnValue!
-            }
-        }
-        set {
-            if Thread.isMainThread {
-                unlockWithBiometricsUnderlyingReturnValue = newValue
-            } else {
-                DispatchQueue.main.sync {
-                    unlockWithBiometricsUnderlyingReturnValue = newValue
-                }
-            }
-        }
-    }
-    var unlockWithBiometricsClosure: (() async -> AppLockServiceBiometricResult)?
-
-    func unlockWithBiometrics() async -> AppLockServiceBiometricResult {
-        unlockWithBiometricsCallsCount += 1
-        if let unlockWithBiometricsClosure = unlockWithBiometricsClosure {
-            return await unlockWithBiometricsClosure()
-        } else {
-            return unlockWithBiometricsReturnValue
         }
     }
 }

@@ -14,6 +14,7 @@ struct AppLockSetupSettingsScreen: View {
     
     var body: some View {
         Form {
+            // MARK: Real PIN
             Section {
                 ListRow(label: .plain(title: L10n.screenAppLockSettingsChangePin),
                         kind: .button { context.send(viewAction: .changePINCode) })
@@ -24,16 +25,25 @@ struct AppLockSetupSettingsScreen: View {
                             kind: .button { context.send(viewAction: .disable) })
                         .accessibilityIdentifier(A11yIdentifiers.appLockSetupSettingsScreen.removePIN)
                 }
+            } header: {
+                Text("Real PIN")
             }
             
-            if context.viewState.supportsBiometrics {
-                Section {
-                    ListRow(label: .plain(title: context.viewState.enableBiometricsTitle),
-                            kind: .toggle($context.enableBiometrics))
-                        .onChange(of: context.enableBiometrics) {
-                            context.send(viewAction: .enableBiometricsChanged)
-                        }
+            // MARK: Dummy (Duress) PIN
+            Section {
+                if context.viewState.isDummyPINEnabled {
+                    ListRow(label: .plain(title: "Change Decoy PIN"),
+                            kind: .button { context.send(viewAction: .changeDummyPINCode) })
+                    ListRow(label: .plain(title: "Remove Decoy PIN", role: .destructive),
+                            kind: .button { context.send(viewAction: .removeDummyPINCode) })
+                } else {
+                    ListRow(label: .plain(title: "Set Decoy PIN"),
+                            kind: .button { context.send(viewAction: .changeDummyPINCode) })
                 }
+            } header: {
+                Text("Decoy PIN (Duress Mode)")
+            } footer: {
+                Text("When the decoy PIN is entered, a fake chat list is shown. Only the real PIN reveals actual messages. Manage this from your real settings only.")
             }
         }
         .compoundList()
@@ -46,24 +56,18 @@ struct AppLockSetupSettingsScreen: View {
 // MARK: - Previews
 
 struct AppLockSetupSettingsScreen_Previews: PreviewProvider, TestablePreview {
-    static let faceIDViewModel = AppLockSetupSettingsScreenViewModel(appLockService: AppLockServiceMock.mock(biometryType: .faceID))
-    static let touchIDViewModel = AppLockSetupSettingsScreenViewModel(appLockService: AppLockServiceMock.mock(isMandatory: true, biometryType: .touchID))
-    static let biometricsUnavailableViewModel = AppLockSetupSettingsScreenViewModel(appLockService: AppLockServiceMock.mock(biometryType: .none))
+    static let viewModel = AppLockSetupSettingsScreenViewModel(appLockService: AppLockServiceMock.mock())
+    static let dummyPINViewModel = AppLockSetupSettingsScreenViewModel(appLockService: AppLockServiceMock.mock(dummyPINCode: "1111"))
     
     static var previews: some View {
         NavigationStack {
-            AppLockSetupSettingsScreen(context: faceIDViewModel.context)
+            AppLockSetupSettingsScreen(context: viewModel.context)
         }
-        .previewDisplayName("Face ID")
+        .previewDisplayName("No Decoy PIN")
         
         NavigationStack {
-            AppLockSetupSettingsScreen(context: touchIDViewModel.context)
+            AppLockSetupSettingsScreen(context: dummyPINViewModel.context)
         }
-        .previewDisplayName("Touch ID (Mandatory)")
-        
-        NavigationStack {
-            AppLockSetupSettingsScreen(context: biometricsUnavailableViewModel.context)
-        }
-        .previewDisplayName("PIN only")
+        .previewDisplayName("With Decoy PIN")
     }
 }

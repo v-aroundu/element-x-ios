@@ -57,11 +57,14 @@ class AppLockScreenViewModel: AppLockScreenViewModelType, AppLockScreenViewModel
     // MARK: - Private
     
     private func submit(_ pinCode: String) {
-        guard appLockService.unlock(with: pinCode) else {
+        switch appLockService.unlock(with: pinCode) {
+        case .unlockedReal:
+            actionsSubject.send(.appUnlocked)
+        case .unlockedDummy:
+            actionsSubject.send(.appUnlockedWithDummyPIN)
+        case .failed:
             handleInvalidPIN()
-            return
         }
-        actionsSubject.send(.appUnlocked)
     }
     
     private func handleForgotPIN() {

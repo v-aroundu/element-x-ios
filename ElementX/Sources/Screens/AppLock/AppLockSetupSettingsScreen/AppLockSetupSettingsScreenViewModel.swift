@@ -21,9 +21,10 @@ class AppLockSetupSettingsScreenViewModel: AppLockSetupSettingsScreenViewModelTy
     
     init(appLockService: AppLockServiceProtocol) {
         self.appLockService = appLockService
-        super.init(initialViewState: AppLockSetupSettingsScreenViewState(isMandatory: appLockService.isMandatory,
-                                                                         biometryType: appLockService.biometryType,
-                                                                         bindings: .init(enableBiometrics: appLockService.biometricUnlockEnabled)))
+        super.init(initialViewState: AppLockSetupSettingsScreenViewState(
+            isMandatory: appLockService.isMandatory,
+            isDummyPINEnabled: appLockService.isDummyPINEnabled,
+            bindings: .init()))
     }
     
     // MARK: - Public
@@ -36,36 +37,15 @@ class AppLockSetupSettingsScreenViewModel: AppLockSetupSettingsScreenViewModelTy
             actionsSubject.send(.changePINCode)
         case .disable:
             showRemovePINAlert()
-        case .enableBiometricsChanged:
-            Task { await toggleBiometrics() }
+        case .changeDummyPINCode:
+            actionsSubject.send(.changeDummyPINCode)
+        case .removeDummyPINCode:
+            showRemoveDummyPINAlert()
         }
     }
     
     // MARK: - Private
     
-    private func toggleBiometrics() async {
-        if state.bindings.enableBiometrics {
-            guard case .success = appLockService.enableBiometricUnlock() else {
-                MXLog.error("Enabling biometric unlock failed.")
-                state.bindings.enableBiometrics = false
-                return
-            }
-            MXLog.info("Biometric unlock enabled.")
-            
-            // Attempt unlock to trigger Face ID permissions alert.
-            if appLockService.biometryType == .faceID,
-               await appLockService.unlockWithBiometrics() != .unlocked {
-                MXLog.info("Confirmation failed. Disabling biometric unlock.")
-                state.bindings.enableBiometrics = false
-                appLockService.disableBiometricUnlock()
-            }
-        } else {
-            appLockService.disableBiometricUnlock()
-            MXLog.info("Biometric unlock disabled.")
-        }
-    }
-    
-    /// Shows a confirmation alert to the user before removing their PIN code.
     private func showRemovePINAlert() {
         state.bindings.alertInfo = .init(id: .confirmRemovePINCode,
                                          title: L10n.screenAppLockSettingsRemovePinAlertTitle,
@@ -74,9 +54,21 @@ class AppLockSetupSettingsScreenViewModel: AppLockSetupSettingsScreenViewModelTy
                                          secondaryButton: .init(title: L10n.actionCancel, role: .cancel, action: nil))
     }
     
-    /// Removes the user's PIN code, disabling the App Lock feature.
     private func completeRemovePIN() {
         appLockService.disable()
         actionsSubject.send(.appLockDisabled)
+    }
+    
+    private func showRemoveDummyPINAlert() {
+        state.bindings.alertInfo = .init(id: .confirmRemoveDummyPINCode,
+                                         title: L10n.screenAppLockSettingsRemovePinAlertTitle,
+                                         message: "Are you sure you want to remove the decoy PIN?",
+                                         primaryButton: .init(title: L10n.actionYes) { self.completeRemoveDummyPIN() },
+                                         secondaryButton: .init(title: L10n.actionCancel, role: .cancel, action: nil))
+    }
+    
+    private func completeRemoveDummyPIN() {
+        appLockService.removeDummyPINCode()
+        state.isDummyPINEnabled = false
     }
 }

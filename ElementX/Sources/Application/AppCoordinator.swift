@@ -895,12 +895,37 @@ class AppCoordinator: AppCoordinatorProtocol, AuthenticationFlowCoordinatorDeleg
             case .lockApp:
                 windowManager.switchToAlternate()
             case .unlockApp:
+                exitDummyModeIfNeeded()
+                windowManager.switchToMain()
+            case .unlockAppWithDummyPIN:
+                showDummyHomeScreen()
                 windowManager.switchToMain()
             case .forceLogout:
                 stateMachine.processEvent(.signOut(isSoft: false, disableAppLock: true))
             }
         }
         .store(in: &cancellables)
+    }
+    
+    // MARK: - Dummy Mode
+    
+    private var isDummyModeActive = false
+    
+    /// Swaps the main window content for the convincing-looking fake home screen.
+    private func showDummyHomeScreen() {
+        guard !isDummyModeActive else { return }
+        isDummyModeActive = true
+        MXLog.info("Entering dummy (duress) mode.")
+        let coordinator = DummyHomeScreenCoordinator()
+        navigationRootCoordinator.setRootCoordinator(coordinator, animated: false)
+    }
+    
+    /// Restores real content if we were in dummy mode.
+    private func exitDummyModeIfNeeded() {
+        guard isDummyModeActive else { return }
+        isDummyModeActive = false
+        MXLog.info("Exiting dummy (duress) mode — real PIN entered.")
+        // The real session flow will be re-presented by the normal unlock path.
     }
     
     private func handleAppRoute(_ appRoute: AppRoute) {

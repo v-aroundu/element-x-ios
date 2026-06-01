@@ -13,8 +13,10 @@ import SwiftUI
 enum AppLockFlowCoordinatorAction: Equatable {
     /// Display the unlock flow.
     case lockApp
-    /// Hide the unlock flow.
+    /// Hide the unlock flow and show real chats.
     case unlockApp
+    /// Hide the unlock flow and show the decoy (dummy) chats.
+    case unlockAppWithDummyPIN
     /// Forces a logout of the user.
     case forceLogout
 }
@@ -27,61 +29,32 @@ class AppLockFlowCoordinator: CoordinatorProtocol {
     
     /// States the flow can find itself in
     enum State: StateType {
-        /// The initial state before the app has launched. If the user hasn't enabled
-        /// App Lock, then the flow will continue to remain in this state after launch.
         case initial
-        /// The app is in the foreground and visible to the user.
         case unlocked
-        /// The app has resigned active but is not yet in the background. This state
-        /// shows the placeholder, but doesn't require an unlock on becoming active.
         case appObscured
-        /// The app is in the background.
         case backgrounded
-        /// The app is returning to the foreground.
         case launching
-        /// The app is presenting biometric unlock to the user.
-        case attemptingBiometricUnlock
-        /// Biometric unlock has completed but the system UI is still the active input.
-        /// Once the app becomes active again, it will trigger the next state.
-        case dismissingBiometricUnlock(AppLockServiceBiometricResult)
-        /// The app is presenting the unlock screen for PIN code entry.
         case attemptingPINUnlock
-        /// The user failed to unlock the app (or forgot their PIN) and is being logged out.
         case loggingOut
     }
 
     /// Events that can be triggered on the flow state machine
     enum Event: EventType {
-        /// Starts the flow while the app is launching in the background.
         case start
-        /// The app is resigning active (going into the app switcher, showing system UI like Face ID, permissions prompt etc).
         case willResignActive
-        /// The app is now backgrounded and not visible to the user.
         case didEnterBackground
-        /// The app is in the background and has just been launched by the user.
         case willEnterForeground
-        /// The app is in the foreground and has been given focus.
         case didBecomeActive
-        /// Biometric unlock has completed with the following result.
-        case didFinishBiometricUnlock(AppLockServiceBiometricResult)
-        /// The entered PIN code was accepted.
         case didUnlockWithPIN
-        /// The user failed to unlock the app (or forgot their PIN).
+        case didUnlockWithDummyPIN
         case forceLogout
-        /// The service has been enabled.
         case serviceEnabled
-        /// The service has been disabled.
         case serviceDisabled
     }
     
     private let stateMachine: StateMachine<State, Event>
     
     private var cancellables: Set<AnyCancellable> = []
-    
-    /// Whether or not biometric unlock should be attempted instead of asking for a PIN.
-    private var isBiometricUnlockAvailable: Bool {
-        appLockService.biometricUnlockEnabled && appLockService.biometricUnlockTrusted
-    }
     
     private let actionsSubject: PassthroughSubject<AppLockFlowCoordinatorAction, Never> = .init()
     var actions: AnyPublisher<AppLockFlowCoordinatorAction, Never> {
@@ -97,32 +70,23 @@ class AppLockFlowCoordinator: CoordinatorProtocol {
         self.navigationCoordinator = navigationCoordinator
         self.appSettings = appSettings
         
-        // Set the initial state and start with the placeholder screen as the root view.
         stateMachine = .init(state: initialState)
         configureStateMachine()
         
         notificationCenter.publisher(for: UIApplication.willResignActiveNotification)
-            .sink { [weak self] _ in
-                self?.stateMachine.tryEvent(.willResignActive)
-            }
+            .sink { [weak self] _ in self?.stateMachine.tryEvent(.willResignActive) }
             .store(in: &cancellables)
         
         notificationCenter.publisher(for: UIApplication.didEnterBackgroundNotification)
-            .sink { [weak self] _ in
-                self?.stateMachine.tryEvent(.didEnterBackground)
-            }
+            .sink { [weak self] _ in self?.stateMachine.tryEvent(.didEnterBackground) }
             .store(in: &cancellables)
         
         notificationCenter.publisher(for: UIApplication.willEnterForegroundNotification)
-            .sink { [weak self] _ in
-                self?.stateMachine.tryEvent(.willEnterForeground)
-            }
+            .sink { [weak self] _ in self?.stateMachine.tryEvent(.willEnterForeground) }
             .store(in: &cancellables)
         
         notificationCenter.publisher(for: UIApplication.didBecomeActiveNotification)
-            .sink { [weak self] _ in
-                self?.stateMachine.tryEvent(.didBecomeActive)
-            }
+            .sink { [weak self] _ in self?.stateMachine.tryEvent(.didBecomeActive) }
             .store(in: &cancellables)
         
         appLockService.isEnabledPublisher
@@ -156,17 +120,11 @@ class AppLockFlowCoordinator: CoordinatorProtocol {
                 return .launching
             case (.launching, .didBecomeActive):
                 guard appLockService.computeNeedsUnlock(didBecomeActiveAt: .now) else { return .unlocked }
-                return isBiometricUnlockAvailable ? .attemptingBiometricUnlock : .attemptingPINUnlock
-            case (.attemptingBiometricUnlock, .didFinishBiometricUnlock(let result)):
-                if ProcessInfo.processInfo.isiOSAppOnMac { // On the Mac the app is already active at this point
-                    return result.toStateMachineState()
-                } else { // On iOS on the other hand it, biometrics keep it non-active
-                    return .dismissingBiometricUnlock(result) // Transitional state until the app becomes active again.
-                }
-            case (.dismissingBiometricUnlock(let result), .didBecomeActive):
-                return result.toStateMachineState()
+                return .attemptingPINUnlock
             case (.attemptingPINUnlock, .didUnlockWithPIN):
                 return .unlocked
+            case (.attemptingPINUnlock, .didUnlockWithDummyPIN):
+                return .unlocked // State machine stays in "unlocked" — AppCoordinator handles the dummy session swap
             case (.attemptingPINUnlock, .forceLogout):
                 return .loggingOut
             
@@ -195,15 +153,14 @@ class AppLockFlowCoordinator: CoordinatorProtocol {
                 showPlaceholder() // Double call but just to be safe. Useful at app launch.
             case (_, .launching):
                 showPlaceholder() // Triple call but necessary after being suspended.
-            case (_, .attemptingBiometricUnlock):
-                showPlaceholder() // For the unlock background. Quadruple call but just to be safe.
-                Task { await self.attemptBiometricUnlock() }
-            case (.attemptingBiometricUnlock, .dismissingBiometricUnlock):
-                break // Transitional state, no need to do anything.
             case (_, .attemptingPINUnlock):
                 showUnlockScreen()
             case (_, .unlocked):
-                actionsSubject.send(.unlockApp)
+                if context.event == .didUnlockWithDummyPIN {
+                    actionsSubject.send(.unlockAppWithDummyPIN)
+                } else {
+                    actionsSubject.send(.unlockApp)
+                }
             case (_, .loggingOut):
                 actionsSubject.send(.forceLogout)
             default:
@@ -226,12 +183,6 @@ class AppLockFlowCoordinator: CoordinatorProtocol {
         actionsSubject.send(.lockApp)
     }
     
-    /// Attempts to authenticate the user using Face ID, Touch ID or (possibly) Optic ID.
-    private func attemptBiometricUnlock() async {
-        let result = await appLockService.unlockWithBiometrics()
-        stateMachine.tryEvent(.didFinishBiometricUnlock(result))
-    }
-    
     /// Displays the unlock flow with the main unlock screen.
     private func showUnlockScreen() {
         let coordinator = AppLockScreenCoordinator(parameters: .init(appLockService: appLockService))
@@ -240,6 +191,8 @@ class AppLockFlowCoordinator: CoordinatorProtocol {
             switch action {
             case .appUnlocked:
                 stateMachine.tryEvent(.didUnlockWithPIN)
+            case .appUnlockedWithDummyPIN:
+                stateMachine.tryEvent(.didUnlockWithDummyPIN)
             case .forceLogout:
                 stateMachine.tryEvent(.forceLogout)
             }
@@ -248,15 +201,5 @@ class AppLockFlowCoordinator: CoordinatorProtocol {
         
         navigationCoordinator.setRootCoordinator(coordinator, animated: false)
         actionsSubject.send(.lockApp)
-    }
-}
-
-private extension AppLockServiceBiometricResult {
-    func toStateMachineState() -> AppLockFlowCoordinator.State {
-        switch self {
-        case .unlocked: .unlocked
-        case .failed: .attemptingPINUnlock
-        case .interrupted: .attemptingBiometricUnlock
-        }
     }
 }

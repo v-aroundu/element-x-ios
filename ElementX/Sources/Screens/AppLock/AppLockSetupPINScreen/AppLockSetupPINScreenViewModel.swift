@@ -95,13 +95,13 @@ class AppLockSetupPINScreenViewModel: AppLockSetupPINScreenViewModelType, AppLoc
         
         if case let .failure(error) = appLockService.setupPINCode(pinCode) {
             MXLog.warning("Failed to set PIN: \(error)")
-            if case .keychainError = error {
+            switch error {
+            case .keychainError:
                 displayAlert(.failedToSetPIN)
-                return
-            } else {
-                displayAlert(.weakPIN) // Shouldn't really happen but just in case.
-                return
+            default:
+                displayAlert(.weakPIN)
             }
+            return
         }
          
         actionsSubject.send(.complete)
@@ -109,7 +109,8 @@ class AppLockSetupPINScreenViewModel: AppLockSetupPINScreenViewModelType, AppLoc
     
     /// Handles a PIN input for the unlock mode.
     private func unlock() {
-        guard appLockService.unlock(with: state.bindings.pinCode) else {
+        let result = appLockService.unlock(with: state.bindings.pinCode)
+        guard result != .failed else {
             state.bindings.pinCode = ""
             if state.numberOfUnlockAttempts >= state.maximumAttempts {
                 displayAlert(.forceLogout)

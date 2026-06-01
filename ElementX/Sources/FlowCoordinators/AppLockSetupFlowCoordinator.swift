@@ -34,37 +34,21 @@ class AppLockSetupFlowCoordinator: FlowCoordinatorProtocol {
     
     /// States the flow can find itself in
     enum State: StateType {
-        /// The initial state, used before the flow starts
         case initial
-        /// The unlock screen.
         case unlock
-        /// The create PIN screen.
         case createPIN(replacingExitingPIN: Bool)
-        /// The allow biometrics screen.
-        case biometricsPrompt
-        /// The settings screen.
         case settings
-        /// The flow is finished. This is a final state.
         case complete
-        /// The user is being signed out. This is a final state.
         case loggingOut
     }
 
     /// Events that can be triggered on the flow state machine
     enum Event: EventType {
-        /// Start the flow.
         case start
-        /// The user entered a PIN.
         case pinEntered
-        /// The user completed the biometrics prompt.
-        case biometricsSet
-        /// The user wants to change their PIN.
         case changePIN
-        /// The user has disabled the app lock feature.
         case appLockDisabled
-        /// The user wants to cancel the flow.
         case cancel
-        /// The user failed to remember their existing PIN.
         case forceLogout
     }
     
@@ -89,13 +73,8 @@ class AppLockSetupFlowCoordinator: FlowCoordinatorProtocol {
         stateMachine.tryEvent(.start)
     }
     
-    func handleAppRoute(_ appRoute: AppRoute, animated: Bool) {
-        // Deep links not supported.
-    }
-    
-    func clearRoute(animated: Bool) {
-        // Deep links not supported.
-    }
+    func handleAppRoute(_ appRoute: AppRoute, animated: Bool) { }
+    func clearRoute(animated: Bool) { }
     
     // MARK: - Private
     
@@ -115,16 +94,14 @@ class AppLockSetupFlowCoordinator: FlowCoordinatorProtocol {
                 return .loggingOut
             case (.createPIN(let replacingExitingPIN), .pinEntered):
                 if presentingFlow == .onboarding {
-                    return appLockService.biometryType != .none ? .biometricsPrompt : .complete
+                    return .complete
                 } else if !replacingExitingPIN {
-                    return appLockService.biometricUnlockEnabled || appLockService.biometryType == .none ? .settings : .biometricsPrompt
+                    return .settings
                 } else {
                     return .settings
                 }
             case (.createPIN(let replacingExitingPIN), .cancel):
                 return replacingExitingPIN ? .settings : .complete
-            case (.biometricsPrompt, .biometricsSet):
-                return presentingFlow == .settings ? .settings : .complete
             case (.settings, .changePIN):
                 return .createPIN(replacingExitingPIN: true)
             case (.settings, .appLockDisabled):
@@ -145,16 +122,12 @@ class AppLockSetupFlowCoordinator: FlowCoordinatorProtocol {
                 showCreatePIN()
             case (.unlock, .settings):
                 showSettings()
-            case (.createPIN, .biometricsPrompt):
-                showBiometricsPrompt()
             case (.createPIN(let replacingExitingPIN), .settings):
                 if replacingExitingPIN {
-                    navigationStackCoordinator.setSheetCoordinator(nil) // Reveal the settings screen again.
+                    navigationStackCoordinator.setSheetCoordinator(nil)
                 } else {
-                    showSettings() // Biometrics was unavailable, push the settings screen now.
+                    showSettings()
                 }
-            case (.biometricsPrompt, .settings):
-                showSettings()
             case (.settings, .createPIN):
                 showCreatePIN()
             case (_, .complete):
@@ -172,8 +145,6 @@ class AppLockSetupFlowCoordinator: FlowCoordinatorProtocol {
     }
 
     private func showCreatePIN() {
-        // Despite appLockService.isMandatory existing, we don't use that here,
-        // to allow for cancellation when changing the PIN code within settings.
         let isMandatory = presentingFlow == .onboarding
         
         let coordinator = AppLockSetupPINScreenCoordinator(parameters: .init(initialMode: .create,
@@ -201,24 +172,6 @@ class AppLockSetupFlowCoordinator: FlowCoordinatorProtocol {
         } else {
             modalNavigationStackCoordinator.setRootCoordinator(coordinator)
             navigationStackCoordinator.setSheetCoordinator(modalNavigationStackCoordinator)
-        }
-    }
-    
-    private func showBiometricsPrompt() {
-        let coordinator = AppLockSetupBiometricsScreenCoordinator(parameters: .init(appLockService: appLockService))
-        coordinator.actions.sink { [weak self] action in
-            guard let self else { return }
-            switch action {
-            case .continue:
-                stateMachine.tryEvent(.biometricsSet)
-            }
-        }
-        .store(in: &cancellables)
-        
-        if presentingFlow == .onboarding {
-            navigationStackCoordinator.push(coordinator)
-        } else {
-            modalNavigationStackCoordinator.push(coordinator)
         }
     }
     
@@ -251,6 +204,8 @@ class AppLockSetupFlowCoordinator: FlowCoordinatorProtocol {
                 stateMachine.tryEvent(.changePIN)
             case .appLockDisabled:
                 stateMachine.tryEvent(.appLockDisabled)
+            case .changeDummyPINCode:
+                showDummyPINSetup()
             }
         }
         .store(in: &cancellables)
@@ -261,7 +216,22 @@ class AppLockSetupFlowCoordinator: FlowCoordinatorProtocol {
         navigationStackCoordinator.setSheetCoordinator(nil)
     }
     
-    /// Tear down the flow for completion.
+    private func showDummyPINSetup() {
+        let dummyPINCoordinator = AppLockSetupDummyPINScreenCoordinator(parameters: .init(appLockService: appLockService))
+        dummyPINCoordinator.actions.sink { [weak self] action in
+            guard let self else { return }
+            switch action {
+            case .complete, .cancel:
+                navigationStackCoordinator.setSheetCoordinator(nil)
+            }
+        }
+        .store(in: &cancellables)
+        dummyPINCoordinator.start()
+        let sheetNav = NavigationStackCoordinator()
+        sheetNav.setRootCoordinator(dummyPINCoordinator)
+        navigationStackCoordinator.setSheetCoordinator(sheetNav)
+    }
+    
     private func complete(from state: State) {
         switch state {
         case .initial, .complete, .loggingOut: fatalError()
@@ -269,9 +239,6 @@ class AppLockSetupFlowCoordinator: FlowCoordinatorProtocol {
             navigationStackCoordinator.setSheetCoordinator(nil)
             actionsSubject.send(.complete)
         case .createPIN:
-            navigationStackCoordinator.setSheetCoordinator(nil)
-            actionsSubject.send(.complete)
-        case .biometricsPrompt:
             navigationStackCoordinator.setSheetCoordinator(nil)
             actionsSubject.send(.complete)
         case .settings:

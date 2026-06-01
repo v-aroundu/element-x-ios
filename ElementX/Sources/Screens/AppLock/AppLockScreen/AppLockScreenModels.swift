@@ -9,8 +9,10 @@
 import Foundation
 
 enum AppLockScreenViewModelAction {
-    /// The user has successfully unlocked the app.
+    /// The user successfully unlocked with the real PIN — show real chats.
     case appUnlocked
+    /// The user successfully unlocked with the dummy (duress) PIN — show decoy chats.
+    case appUnlockedWithDummyPIN
     /// The user failed to unlock the app (or forgot their PIN).
     case forceLogout
 }

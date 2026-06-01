@@ -18,20 +18,18 @@ enum AppLockServiceError: Error {
     case weakPIN
     /// A PIN code hasn't been set yet.
     case pinNotSet
-    /// Attempting to use biometric unlock when it isn't yet supported on this device.
-    case biometricUnlockNotSupported
+    /// The dummy PIN cannot be the same as the real PIN.
+    case dummyPINMatchesRealPIN
 }
 
-/// The result of an attempt to unlock the app using Touch ID or Face ID.
-enum AppLockServiceBiometricResult {
-    /// Biometric lock was successful.
-    case unlocked
-    /// Biometric lock failed to authenticate the user. This represents any failure
-    /// other than the app being backgrounded during the authentication.
+/// The result of an attempt to unlock the app using a PIN code.
+enum AppLockPINUnlockResult {
+    /// The real PIN was entered — show real chats.
+    case unlockedReal
+    /// The dummy (duress) PIN was entered — show decoy chats.
+    case unlockedDummy
+    /// The PIN was incorrect.
     case failed
-    /// Biometric lock was interrupted by the system and did not complete. The expected
-    /// cause for this that the app was backgrounded whilst the request was in progress.
-    case interrupted
 }
 
 @MainActor
@@ -44,38 +42,34 @@ protocol AppLockServiceProtocol: AnyObject {
     /// A publisher that advertises when the service has been enabled or disabled.
     var isEnabledPublisher: AnyPublisher<Bool, Never> { get }
     
-    /// The type of biometric authentication supported by the device.
-    var biometryType: LABiometryType { get }
-    /// Whether or not the user has enabled unlock via TouchID, FaceID or (possibly) OpticID.
-    var biometricUnlockEnabled: Bool { get }
-    /// Whether TouchID, FaceID or (possibly) OpticID are trusted, or if the app needs the user
-    /// to re-enter their PIN code to re-enable the feature (i.e. to accept a new face or fingerprint).
-    var biometricUnlockTrusted: Bool { get }
-    
-    /// Sets the user's PIN code used to unlock the app.
+    /// Sets the user's real PIN code used to unlock the app.
     func setupPINCode(_ pinCode: String) -> Result<Void, AppLockServiceError>
     /// Validates the supplied PIN code is long enough, only contains digits and isn't a weak choice.
     func validate(_ pinCode: String) -> Result<Void, AppLockServiceError>
-    /// Enables the use of Touch ID/Face ID as an alternative to the PIN code.
-    func enableBiometricUnlock() -> Result<Void, AppLockServiceError>
-    /// Disables the use of Touch ID/Face ID as an alternative to the PIN code.
-    func disableBiometricUnlock()
     /// Disables the App Lock feature, removing the user's stored PIN code.
     func disable()
     
+    // MARK: Dummy PIN (Duress Mode)
+    
+    /// Whether or not a dummy (duress) PIN code has been configured.
+    var isDummyPINEnabled: Bool { get }
+    /// Sets the dummy PIN shown to a coercer. Must differ from the real PIN.
+    func setupDummyPINCode(_ pinCode: String) -> Result<Void, AppLockServiceError>
+    /// Removes the dummy PIN code.
+    func removeDummyPINCode()
+    
+    // MARK: Unlock
+    
     /// Informs the service that the app has entered the background.
     func applicationDidEnterBackground()
-    /// Decides whether the app should be unlocked with a PIN code/biometrics on foregrounding.
+    /// Decides whether the app should be unlocked with a PIN code on foregrounding.
     func computeNeedsUnlock(didBecomeActiveAt date: Date) -> Bool
     
     /// Attempt to unlock the app with the supplied PIN code.
-    func unlock(with pinCode: String) -> Bool
-    /// Attempt to unlock the app using FaceID or TouchID.
-    func unlockWithBiometrics() async -> AppLockServiceBiometricResult
+    /// Returns `.unlockedReal`, `.unlockedDummy`, or `.failed`.
+    func unlock(with pinCode: String) -> AppLockPINUnlockResult
     
     /// The number of attempts the user had made to unlock with a PIN code.
-    ///
-    /// Note: We don't track the biometric attempts as LAContext does that automatically.
     var numberOfPINAttempts: AnyPublisher<Int, Never> { get }
 }
 
@@ -83,14 +77,17 @@ protocol AppLockServiceProtocol: AnyObject {
 extension AppLockServiceProtocol { }
 
 extension AppLockServiceMock {
-    static func mock(pinCode: String? = "2023", isMandatory: Bool = false, biometryType: LABiometryType = .faceID, numberOfPINAttempts: Int = 0) -> AppLockServiceMock {
+    static func mock(pinCode: String? = "2023", dummyPINCode: String? = nil, isMandatory: Bool = false, numberOfPINAttempts: Int = 0) -> AppLockServiceMock {
         let mock = AppLockServiceMock()
         mock.isEnabled = pinCode != nil
         mock.isMandatory = isMandatory
+        mock.isDummyPINEnabled = dummyPINCode != nil
         mock.numberOfPINAttempts = CurrentValueSubject<Int, Never>(numberOfPINAttempts).eraseToAnyPublisher()
-        mock.underlyingBiometryType = biometryType
-        mock.underlyingBiometricUnlockEnabled = biometryType != .none
-        mock.unlockWithClosure = { $0 == pinCode }
+        mock.unlockWithClosure = { pin in
+            if pin == pinCode { return .unlockedReal }
+            if let dummyPINCode, pin == dummyPINCode { return .unlockedDummy }
+            return .failed
+        }
         return mock
     }
 }

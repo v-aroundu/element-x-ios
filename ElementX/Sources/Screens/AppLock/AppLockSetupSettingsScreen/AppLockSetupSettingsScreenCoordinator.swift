@@ -15,6 +15,7 @@ struct AppLockSetupSettingsScreenCoordinatorParameters {
 
 enum AppLockSetupSettingsScreenCoordinatorAction {
     case changePINCode
+    case changeDummyPINCode
     case appLockDisabled
 }
 
@@ -39,6 +40,8 @@ final class AppLockSetupSettingsScreenCoordinator: CoordinatorProtocol {
             switch action {
             case .changePINCode:
                 actionsSubject.send(.changePINCode)
+            case .changeDummyPINCode:
+                actionsSubject.send(.changeDummyPINCode)
             case .appLockDisabled:
                 actionsSubject.send(.appLockDisabled)
             }
